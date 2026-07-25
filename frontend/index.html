@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel — Bilingual KSP Crime Investigator Interface</title>
+    <!-- Google Fonts for English and Kannada -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="theme-dark lang-en role-investigator">
+
+    <!-- TOP BAR -->
+    <header class="top-bar" id="top-bar">
+        <div class="top-bar-left">
+            <div class="app-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="shield-icon">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                </svg>
+                <div class="logo-text">
+                    <span class="app-name" data-i18n="appTitle">SENTINEL</span>
+                    <span class="app-sub" data-i18n="appSub">KSP Crime Records Intelligence</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="top-bar-right">
+            <!-- Role Badge & Selector -->
+            <div class="role-selector-container">
+                <span class="control-label" data-i18n="roleLabel">Role:</span>
+                <button class="role-toggle-btn" id="role-toggle-btn" title="Toggle User Role">
+                    <span class="role-badge investigator-badge" id="role-badge-text">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span data-i18n="roleInvestigator">Investigator</span>
+                    </span>
+                </button>
+            </div>
+
+            <!-- Language Switcher -->
+            <div class="lang-switch-container">
+                <button class="lang-toggle-btn" id="lang-toggle-btn" aria-label="Toggle Language EN / Kannada">
+                    <span class="lang-opt opt-en active">EN</span>
+                    <span class="lang-divider">/</span>
+                    <span class="lang-opt opt-kn">ಕನ್ನಡ</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="btn-new-chat" id="btn-new-chat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span data-i18n="newChat">New Investigation</span>
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title" data-i18n="recentQueries">Recent Queries</div>
+                <ul class="history-list" id="history-list">
+                    <li class="history-item active" data-state="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <div class="history-info">
+                            <span class="history-title" data-i18n="hist1Title">Suspect #89241 Whitefield burglary</span>
+                            <span class="history-date">10 mins ago</span>
+                        </div>
+                    </li>
+                    <li class="history-item" data-state="1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <div class="history-info">
+                            <span class="history-title" data-i18n="hist2Title">FIRs in Ramanagara district 2024</span>
+                            <span class="history-date">2 hours ago</span>
+                        </div>
+                    </li>
+                    <li class="history-item" data-state="1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <div class="history-info">
+                            <span class="history-title" data-i18n="hist3Title">Chargesheet status for case
+                                #2024-WF-089</span>
+                            <span class="history-date">Yesterday</span>
+                        </div>
+                    </li>
+                    <li class="history-item" data-state="1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <div class="history-info">
+                            <span class="history-title" data-i18n="hist4Title">Night burglary MO matching flags</span>
+                            <span class="history-date">2 days ago</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Testing State Toggle Switch in Sidebar -->
+            <div class="sidebar-section state-switcher-box">
+                <div class="section-title" data-i18n="viewStateTitle">UI State Preview</div>
+                <div class="state-btn-group">
+                    <button class="state-btn active" id="btn-state-1" data-i18n="state1Label">State 1: Empty
+                        Chat</button>
+                    <button class="state-btn" id="btn-state-2" data-i18n="state2Label">State 2: Resolved Entity</button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn-export-pdf" id="btn-export-pdf">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="12" y1="18" x2="12" y2="12" />
+                        <polyline points="9 15 12 18 15 15" />
+                    </svg>
+                    <span data-i18n="exportPdf">Export as PDF</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA -->
+        <main class="main-content" id="main-content">
+
+            <!-- STATE 1: EMPTY / CHAT STATE -->
+            <div class="state-view state-1-view active" id="state-1-view">
+                <div class="chat-welcome-container">
+                    <div class="welcome-badge">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+                    <h1 class="welcome-title" data-i18n="welcomeTitle">Karnataka State Police Crime Intelligence</h1>
+                    <p class="welcome-subtitle" data-i18n="welcomeSub">Bilingual Natural Language Crime Records Query &
+                        Entity Resolution System</p>
+
+                    <!-- Main Centered Input Bar -->
+                    <div class="input-bar-wrapper">
+                        <form class="input-bar" id="chat-form-state1">
+                            <input type="text" class="chat-input" id="chat-input-1"
+                                placeholder="Ask a question or enter suspect/FIR ID..."
+                                data-i18n-placeholder="inputPlaceholder">
+
+                            <div class="input-actions">
+                                <button type="button" class="mic-icon-btn" id="mic-btn"
+                                    title="Voice Input (Visual Placeholder)" aria-label="Voice Input">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                        <line x1="12" y1="19" x2="12" y2="23" />
+                                        <line x1="8" y1="23" x2="16" y2="23" />
+                                    </svg>
+                                    <span class="mic-tooltip" data-i18n="micTooltip">Mic ready</span>
+                                </button>
+                                <button type="submit" class="send-btn" title="Send Query">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="22" y1="2" x2="11" y2="13" />
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Suggested Query Chips -->
+                    <div class="suggested-chips-container">
+                        <div class="chips-label" data-i18n="suggestedLabel">Suggested Queries:</div>
+                        <div class="chips-wrapper" id="suggested-chips">
+                            <!-- Populated dynamically based on role & language -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE 2: RESOLVED ENTITY STATE -->
+            <div class="state-view state-2-view" id="state-2-view">
+
+                <!-- Query Header Banner -->
+                <div class="entity-header-banner">
+                    <div class="banner-tag">
+                        <span class="status-indicator live"></span>
+                        <span data-i18n="entityResolvedTag">RESOLVED ENTITY SUMMARY</span>
+                    </div>
+                    <div class="user-query-display">
+                        <span class="query-icon">🔍</span>
+                        <span id="active-query-text" data-i18n="activeQueryText">Show all details and linked records for
+                            Suspect ACC-89241 in Whitefield burglary case</span>
+                    </div>
+                </div>
+
+                <!-- 1. Top Direct Text-Answer Bubble -->
+                <div class="direct-answer-card">
+                    <div class="answer-header">
+                        <div class="ai-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 16v-4" />
+                                <path d="M12 8h.01" />
+                            </svg>
+                            <span data-i18n="directAnswerHeader">Direct Intelligence Response</span>
+                        </div>
+                        <span class="confidence-badge" data-i18n="confidenceBadge">High Confidence Match (98.4%)</span>
+                    </div>
+                    <div class="answer-body" id="answer-body-text" data-i18n="directAnswerText">
+                        Suspect <strong>ACC-89241 (Manjunath @ "Blade" Kumar)</strong> is linked to 4 registered FIRs
+                        across Whitefield (Bengaluru) and Ramanagara districts. 3 cases have been chargesheeted while 1
+                        remains under active investigation. Subject was last arrested on 14 Nov 2023 and has 6 known
+                        gang associates. 5 open night-burglary cases match his known Modus Operandi (MO: rear-window
+                        grill cutting with hydraulic shears).
+                    </div>
+                </div>
+
+                <!-- 2. Horizontal Row of 5 Preview Cards -->
+                <div class="cards-section-header">
+                    <h2 data-i18n="keyMetricsHeader">Investigative Indicators</h2>
+                    <span class="cards-hint" data-i18n="cardsHint">Click any card to inspect detailed record logs</span>
+                </div>
+
+                <div class="cards-grid-row" id="cards-grid-row">
+
+                    <!-- Card 1: Linked Cases -->
+                    <div class="preview-card card-linked-cases" data-card="linked-cases" tabIndex="0">
+                        <div class="card-top">
+                            <div class="card-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                </svg>
+                            </div>
+                            <span class="card-chevron">→</span>
+                        </div>
+                        <div class="card-title" data-i18n="card1Title">Linked Cases</div>
+                        <div class="card-stat-main">
+                            <span class="stat-number">4</span>
+                            <span class="stat-label" data-i18n="card1StatLabel">Total FIRs</span>
+                        </div>
+                        <div class="card-sub-info">
+                            <span class="sub-badge" data-i18n="card1SubInfo">2 Districts Involved (Whitefield,
+                                Ramanagara)</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Chargesheet Status -->
+                    <div class="preview-card card-chargesheet" data-card="chargesheet" tabIndex="0">
+                        <div class="card-top">
+                            <div class="card-icon green">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                    <polyline points="22 4 12 14.01 9 11.01" />
+                                </svg>
+                            </div>
+                            <span class="card-chevron">→</span>
+                        </div>
+                        <div class="card-title" data-i18n="card2Title">Chargesheet Status</div>
+                        <div class="card-stat-main">
+                            <span class="stat-number text-success">3 <small>/ 4</small></span>
+                            <span class="stat-label" data-i18n="card2StatLabel">Filed</span>
+                        </div>
+                        <div class="card-sub-info">
+                            <span class="sub-pill success" data-i18n="card2Status1">3 Chargesheeted</span>
+                            <span class="sub-pill warning" data-i18n="card2Status2">1 Pending</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Arrest History -->
+                    <div class="preview-card card-arrests" data-card="arrests" tabIndex="0">
+                        <div class="card-top">
+                            <div class="card-icon amber">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                            </div>
+                            <span class="card-chevron">→</span>
+                        </div>
+                        <div class="card-title" data-i18n="card3Title">Arrest History</div>
+                        <div class="card-stat-main">
+                            <span class="stat-number">2</span>
+                            <span class="stat-label" data-i18n="card3StatLabel">Past Arrests</span>
+                        </div>
+                        <div class="card-sub-info">
+                            <span class="sub-badge text-amber" data-i18n="card3SubInfo">Latest: 14 Nov 2023</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Network View -->
+                    <div class="preview-card card-network" data-card="network" tabIndex="0">
+                        <div class="card-top">
+                            <div class="card-icon purple">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="18" cy="5" r="3" />
+                                    <circle cx="6" cy="12" r="3" />
+                                    <circle cx="18" cy="19" r="3" />
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                </svg>
+                            </div>
+                            <span class="card-chevron">→</span>
+                        </div>
+                        <div class="card-title" data-i18n="card4Title">Network View</div>
+                        <div class="card-stat-main">
+                            <span class="stat-number">6</span>
+                            <span class="stat-label" data-i18n="card4StatLabel">Associates</span>
+                        </div>
+                        <div class="card-sub-info">
+                            <span class="sub-badge" data-i18n="card4SubInfo">Co-accused & Receiver Network</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: MO Match Flags -->
+                    <div class="preview-card card-mo-matches" data-card="mo-matches" tabIndex="0">
+                        <div class="card-top">
+                            <div class="card-icon red">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            <span class="card-chevron">→</span>
+                        </div>
+                        <!-- EXACT TITLE AS REQUESTED: MO Match Flags -->
+                        <div class="card-title" data-i18n="card5Title">MO Match Flags</div>
+                        <div class="card-stat-main">
+                            <span class="stat-number text-danger">5</span>
+                            <span class="stat-label" data-i18n="card5StatLabel">Matched Cases</span>
+                        </div>
+                        <div class="card-sub-info">
+                            <span class="sub-badge text-danger" data-i18n="card5SubInfo">High MO Similarity
+                                (>85%)</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Placeholder Container for Network Graph (id="network-graph") -->
+                <div class="network-graph-container">
+                    <div class="graph-header">
+                        <div class="graph-title-group">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                            <span class="graph-heading" data-i18n="graphHeading">Associate & Case Relationship
+                                Graph</span>
+                        </div>
+                        <span class="graph-status-badge" data-i18n="graphPlaceholderTag">Ready for D3 /
+                            vis-network</span>
+                    </div>
+
+                    <!-- REQUIRED ID CONTAINER FOR NETWORK GRAPH -->
+                    <div id="network-graph" class="network-graph-viewport">
+                        <div class="graph-visual-placeholder">
+                            <svg viewBox="0 0 600 240" class="placeholder-svg-nodes">
+                                <!-- Edge Lines -->
+                                <line x1="300" y1="120" x2="160" y2="70" stroke="#334155" stroke-width="2"
+                                    stroke-dasharray="4" />
+                                <line x1="300" y1="120" x2="180" y2="170" stroke="#334155" stroke-width="2" />
+                                <line x1="300" y1="120" x2="440" y2="70" stroke="#334155" stroke-width="2" />
+                                <line x1="300" y1="120" x2="420" y2="180" stroke="#334155" stroke-width="2" />
+                                <line x1="160" y1="70" x2="80" y2="90" stroke="#334155" stroke-width="1.5" />
+                                <line x1="440" y1="70" x2="520" y2="110" stroke="#334155" stroke-width="1.5" />
+
+                                <!-- Central Suspect Node -->
+                                <circle cx="300" cy="120" r="28" fill="#1E293B" stroke="#3B82F6" stroke-width="3" />
+                                <text x="300" y="125" text-anchor="middle" fill="#F8FAFC" font-size="11"
+                                    font-weight="bold">ACC-89241</text>
+                                <text x="300" y="160" text-anchor="middle" fill="#94A3B8" font-size="10">Target
+                                    Suspect</text>
+
+                                <!-- Associate Nodes -->
+                                <circle cx="160" cy="70" r="18" fill="#1E293B" stroke="#F59E0B" stroke-width="2" />
+                                <text x="160" y="74" text-anchor="middle" fill="#CBD5E1" font-size="9">ACC-771</text>
+
+                                <circle cx="180" cy="170" r="18" fill="#1E293B" stroke="#F59E0B" stroke-width="2" />
+                                <text x="180" y="174" text-anchor="middle" fill="#CBD5E1" font-size="9">ACC-902</text>
+
+                                <circle cx="440" cy="70" r="18" fill="#1E293B" stroke="#10B981" stroke-width="2" />
+                                <text x="440" y="74" text-anchor="middle" fill="#CBD5E1" font-size="9">FIR-2024</text>
+
+                                <circle cx="420" cy="180" r="18" fill="#1E293B" stroke="#EF4444" stroke-width="2" />
+                                <text x="420" y="184" text-anchor="middle" fill="#CBD5E1" font-size="9">MO-FLAG</text>
+
+                                <circle cx="80" cy="90" r="14" fill="#0F172A" stroke="#475569" stroke-width="1.5" />
+                                <circle cx="520" cy="110" r="14" fill="#0F172A" stroke="#475569" stroke-width="1.5" />
+                            </svg>
+                            <div class="graph-overlay-note" data-i18n="graphNote">
+                                Container <code>#network-graph</code> initialized. Ready for D3.js or vis-network
+                                instance.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Collapsed Expandable Accordion Panel: "Show reasoning and sources" -->
+                <div class="reasoning-accordion-container">
+                    <details class="reasoning-accordion" id="reasoning-details">
+                        <summary class="reasoning-summary">
+                            <div class="summary-left">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" class="accordion-icon">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                                <span class="summary-title" data-i18n="reasoningTitle">Show reasoning and sources</span>
+                            </div>
+                            <span class="summary-badge" data-i18n="reasoningMeta">4 CCTNS Tables • SQL Executed</span>
+                        </summary>
+
+                        <div class="reasoning-content">
+                            <!-- Field 1: source_tables -->
+                            <div class="reasoning-field">
+                                <div class="field-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M12 2H2v10h10V2z" />
+                                        <path d="M22 2h-7v10h7V2z" />
+                                        <path d="M12 14H2v8h10v-8z" />
+                                        <path d="M22 14h-7v8h7v-8z" />
+                                    </svg>
+                                    <code>source_tables</code>:
+                                </div>
+                                <div class="tables-chips-list">
+                                    <span class="table-chip">cctns_fir_register</span>
+                                    <span class="table-chip">cctns_chargesheet_v2</span>
+                                    <span class="table-chip">iapps_arrest_log</span>
+                                    <span class="table-chip">mo_matching_index</span>
+                                    <span class="table-chip">ksp_district_jurisdiction</span>
+                                </div>
+                            </div>
+
+                            <!-- Field 2: query_summary -->
+                            <div class="reasoning-field">
+                                <div class="field-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="16 18 22 12 16 6" />
+                                        <polyline points="8 6 2 12 8 18" />
+                                    </svg>
+                                    <code>query_summary</code>:
+                                </div>
+                                <div class="query-code-block">
+                                    <pre><code>SELECT 
+    f.fir_no, f.district, f.section_code,
+    c.chargesheet_no, c.status AS chargesheet_status,
+    a.arrest_date, a.jail_status,
+    m.mo_match_score, m.pattern_type
+FROM cctns_fir_register f
+LEFT JOIN cctns_chargesheet_v2 c ON f.fir_id = c.fir_id
+LEFT JOIN iapps_arrest_log a ON f.accused_id = a.accused_id
+LEFT JOIN mo_matching_index m ON f.mo_code = m.mo_code
+WHERE f.accused_id = 'ACC-89241' AND f.district IN ('Whitefield', 'Ramanagara');</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Bottom Input Bar in State 2 for continuous conversation -->
+                <div class="state2-bottom-input">
+                    <form class="input-bar small" id="chat-form-state2">
+                        <input type="text" class="chat-input" id="chat-input-2" placeholder="Ask follow-up question..."
+                            data-i18n-placeholder="followupPlaceholder">
+                        <button type="submit" class="send-btn" title="Send Follow-up">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- DETAIL MODAL OVERLAY FOR CARDS -->
+    <div class="modal-overlay" id="detail-modal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" id="modal-icon">📋</span>
+                    <h3 class="modal-title" id="modal-title">Record Details</h3>
+                </div>
+                <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content loaded dynamically based on clicked card -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-action-btn" id="modal-ok-btn" data-i18n="closeBtn">Close Window</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
