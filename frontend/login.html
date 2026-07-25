@@ -35,6 +35,7 @@
             text-align: center;
             box-shadow: var(--shadow-card);
             z-index: 10;
+            overflow: visible;
         }
 
         .login-logo {
@@ -63,7 +64,18 @@
 
         #loginDivElementId {
             width: 100%;
-            min-height: 200px;
+            min-height: 480px;
+            overflow: visible;
+            background-color: transparent;
+        }
+
+        #loginDivElementId iframe {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 480px !important;
+            border: none !important;
+            background-color: transparent !important;
+            overflow: visible !important;
         }
     </style>
 </head>
@@ -95,7 +107,8 @@
     <script src="/__catalyst/sdk/init.js"></script>
     <script>
       const config = {
-        service_url: "/index.html" // redirect here after successful login — adjust to match my actual main page filename
+        service_url: "/index.html",
+        css_url: "/css/embeddediframe.css"
       };
       catalyst.auth.signIn("loginDivElementId", config);
     </script>

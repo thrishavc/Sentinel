@@ -1,0 +1,170 @@
+/* ==========================================================================
+   SENTINEL — CATALYST EMBEDDED IFRAME / AUTH WIDGET DARK THEME OVERRIDES
+   ========================================================================== */
+
+:root {
+    --bg-main: #121214;
+    --bg-surface: #18181B;
+    --bg-card: #1E1E2A;
+    --bg-card-hover: #28282D;
+    --bg-input: #2A2A38;
+    --border-color: #3F3F52;
+    --border-dashed: rgba(245, 158, 11, 0.25);
+    --border-focus: #F59E0B;
+    --text-main: #E5E7EB;
+    --text-muted: #9CA3AF;
+    --text-sub: #D4D4D8;
+    --accent-amber: #F59E0B;
+    --accent-amber-hover: #D97706;
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Force dark background & full width on iframe container, html & body */
+html, 
+body, 
+div, 
+form, 
+#main_container, 
+.za-login-container, 
+.zp-login-container, 
+.signup-container, 
+.signin-box, 
+.login-container, 
+.form-container {
+    background-color: #1E1E2A !important;
+    color: #E5E7EB !important;
+    font-family: var(--font-primary, sans-serif) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+html, body {
+    min-height: 100% !important;
+    height: auto !important;
+}
+
+/* Dark Styling for Labels, Headings & Text */
+label, 
+p, 
+span, 
+h1, 
+h2, 
+h3, 
+h4, 
+div, 
+.field-label, 
+.textbox-label, 
+.title, 
+.field_label, 
+.signin_title {
+    color: #E5E7EB !important;
+}
+
+.sub-title, .forgot-pass, .help-text, .secondary-text, .forgot_password {
+    color: #9CA3AF !important;
+}
+
+/* Input Fields (Dark #2A2A38 background, light #E5E7EB text, visible 1px solid #3F3F52 border) */
+input, 
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="number"], 
+select, 
+textarea,
+.textbox,
+.field_input {
+    background-color: #2A2A38 !important;
+    color: #E5E7EB !important;
+    border: 1px solid #3F3F52 !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.95rem !important;
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    caret-color: #E5E7EB !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+input:focus, 
+select:focus, 
+textarea:focus,
+.textbox:focus {
+    background-color: #2A2A38 !important;
+    color: #E5E7EB !important;
+    border-color: #F59E0B !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* Fix Autofill White Flash */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #2A2A38 inset !important;
+    -webkit-text-fill-color: #E5E7EB !important;
+    border: 1px solid #F59E0B !important;
+    caret-color: #E5E7EB !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Primary Action Buttons (Amber Accent #F59E0B with dark text #121214) */
+button, 
+input[type="submit"], 
+input[type="button"], 
+.btn, 
+.btn-primary, 
+.btn-submit, 
+.btn-login, 
+.submit-btn, 
+.signin-btn, 
+.btn_signin {
+    background-color: #F59E0B !important;
+    color: #121214 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1.25rem !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    font-family: var(--font-primary, sans-serif) !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    transition: background-color 0.2s ease, transform 0.1s ease !important;
+}
+
+button:hover, 
+input[type="submit"]:hover, 
+input[type="button"]:hover, 
+.btn-primary:hover, 
+.btn_signin:hover {
+    background-color: #D97706 !important;
+    color: #121214 !important;
+}
+
+/* Links */
+a {
+    color: #F59E0B !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    text-decoration: underline !important;
+}
+
+/* Remove internal scrollbars */
+html, body, ::-webkit-scrollbar {
+    overflow: visible !important;
+}
+
+::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}

@@ -766,9 +766,14 @@ function renderState2WithData(data, queryText) {
 }
 
 /**
- * Animates preview card main stat numbers from 0 up to their target values over 600ms
+ * Animates preview card main stat numbers from 0 up to their target values
  */
 function animateStatNumbers() {
+    if (window.SentinelAnimations && typeof window.SentinelAnimations.animateStatNumbers === 'function') {
+        window.SentinelAnimations.animateStatNumbers();
+        return;
+    }
+
     const statEls = document.querySelectorAll('.preview-card .stat-number');
     statEls.forEach(el => {
         const text = el.textContent || el.innerText;
@@ -830,6 +835,9 @@ function switchState(stateNum) {
         view2?.classList.remove('active', 'animate-in');
         btn1?.classList.add('active');
         btn2?.classList.remove('active');
+        if (window.SentinelAnimations?.animatePageEntrance) {
+            window.SentinelAnimations.animatePageEntrance();
+        }
     } else {
         view1?.classList.remove('active');
         view2?.classList.add('active');
@@ -838,6 +846,9 @@ function switchState(stateNum) {
         view2?.classList.add('animate-in');
         btn1?.classList.remove('active');
         btn2?.classList.add('active');
+        if (window.SentinelAnimations?.animateState2Entrance) {
+            window.SentinelAnimations.animateState2Entrance();
+        }
     }
 
     // Redirect to top of summary view instantly without scrolling lag
@@ -857,6 +868,9 @@ function handleQuerySubmit(userQuery) {
 
     if (overlay) {
         overlay.classList.add('active');
+        if (window.SentinelAnimations?.startLoadingPulse) {
+            window.SentinelAnimations.startLoadingPulse();
+        }
     }
 
     setTimeout(() => {
@@ -872,6 +886,9 @@ function handleQuerySubmit(userQuery) {
 
         if (overlay) {
             overlay.classList.remove('active');
+            if (window.SentinelAnimations?.stopLoadingPulse) {
+                window.SentinelAnimations.stopLoadingPulse();
+            }
         }
 
         // Reset input fields

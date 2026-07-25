@@ -500,19 +500,52 @@ body.lang-kn .opt-kn {
     box-shadow: var(--shadow-glow), 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
-.chat-input {
+.chat-input,
+#chat-input-1,
+#chat-input-2 {
     flex: 1;
-    background: transparent;
+    background-color: var(--bg-input, #1A1A1E);
+    color: var(--text-main, #E5E7EB);
+    caret-color: var(--accent-amber, #F59E0B);
     border: none;
     outline: none;
-    color: var(--text-main);
     font-size: 0.95rem;
     font-family: inherit;
     padding: 0.6rem 0;
 }
 
-.chat-input::placeholder {
+.chat-input:focus,
+#chat-input-1:focus,
+#chat-input-2:focus {
+    background-color: var(--bg-input, #1A1A1E);
+    color: var(--text-main, #E5E7EB);
+    outline: none;
+    box-shadow: none;
+}
+
+.chat-input::placeholder,
+#chat-input-1::placeholder,
+#chat-input-2::placeholder {
     color: #64646C;
+}
+
+/* Override browser default white background on autofill / typed focus */
+.chat-input:-webkit-autofill,
+.chat-input:-webkit-autofill:hover,
+.chat-input:-webkit-autofill:focus,
+.chat-input:-webkit-autofill:active,
+#chat-input-1:-webkit-autofill,
+#chat-input-1:-webkit-autofill:hover,
+#chat-input-1:-webkit-autofill:focus,
+#chat-input-1:-webkit-autofill:active,
+#chat-input-2:-webkit-autofill,
+#chat-input-2:-webkit-autofill:hover,
+#chat-input-2:-webkit-autofill:focus,
+#chat-input-2:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #1A1A1E inset !important;
+    -webkit-text-fill-color: #E5E7EB !important;
+    caret-color: #F59E0B !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .input-actions {
