@@ -442,21 +442,41 @@ function initEventListeners() {
     document.getElementById('btn-state-2')?.addEventListener('click', () => switchState(2));
     document.getElementById('btn-new-chat')?.addEventListener('click', () => switchState(1));
 
-    // 4. Sidebar History Items click handler
-    const historyItems = document.querySelectorAll('.history-item');
+    // 4. Sidebar History Items click handler (.history-item and .recent-list__item)
+    const historyItems = document.querySelectorAll('.history-item, .recent-list__item');
     historyItems.forEach((item, index) => {
         item.addEventListener('click', () => {
             historyItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
 
-            // Map history click to corresponding suspect if available
-            if (MOCK_SUSPECTS[index]) {
-                renderState2WithData(MOCK_SUSPECTS[index].data);
-                switchState(2);
-            } else {
-                renderState2WithData(MOCK_SUSPECTS[0].data);
-                switchState(2);
+            const suspectId = item.getAttribute('data-suspect-id');
+            const titleEl = item.querySelector('.history-title') || item;
+            const queryText = titleEl.textContent.replace(/\s+/g, ' ').trim();
+
+            let suspect = null;
+
+            // 1. Match suspect by explicit data-suspect-id attribute
+            if (suspectId) {
+                suspect = MOCK_SUSPECTS.find(s => s.id === suspectId);
             }
+
+            // 2. Fallback to fuzzy / text query matching
+            if (!suspect) {
+                suspect = findSuspectByQuery(queryText);
+            }
+
+            // 3. Fallback to array index
+            if (!suspect && MOCK_SUSPECTS[index]) {
+                suspect = MOCK_SUSPECTS[index];
+            }
+
+            // 4. Default fallback
+            if (!suspect) {
+                suspect = MOCK_SUSPECTS[0];
+            }
+
+            renderState2WithData(suspect.data, queryText);
+            showState(2);
         });
     });
 
@@ -502,26 +522,165 @@ function initEventListeners() {
 }
 
 // ==========================================================================
-// 4. RENDER STATE 2 WITH DATA & QUERY HANDLING
+// 4. FUZZY MATCHING & LEVENSHTEIN DISTANCE
 // ==========================================================================
 
 /**
- * Updates all DOM elements in State 2 to display a specific suspect's dataset
- * @param {Object} data - A suspect's `data` object
+ * Calculates Levenshtein distance between two strings
  */
-function renderState2WithData(data) {
-    if (!data) return;
-    window.ACTIVE_ENTITY_DATA = data;
+function levenshteinDistance(a, b) {
+    const aLen = a.length;
+    const bLen = b.length;
+    if (aLen === 0) return bLen;
+    if (bLen === 0) return aLen;
+
+    const row = Array(bLen + 1);
+    for (let i = 0; i <= bLen; i++) row[i] = i;
+
+    for (let i = 1; i <= aLen; i++) {
+        let prev = i - 1;
+        row[0] = i;
+        for (let j = 1; j <= bLen; j++) {
+            const temp = row[j];
+            if (a[i - 1] === b[j - 1]) {
+                row[j] = prev;
+            } else {
+                row[j] = Math.min(prev + 1, Math.min(row[j] + 1, row[j - 1] + 1));
+            }
+            prev = temp;
+        }
+    }
+    return row[bLen];
+}
+
+/**
+ * Helper to escape HTML characters in user input to prevent XSS
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/**
+ * Finds a suspect in MOCK_SUSPECTS matching query by exact substring or Levenshtein distance fuzzy matching
+ * @param {string} query 
+ * @returns {Object|null} Suspect object or null if no match found
+ */
+function findSuspectByQuery(query) {
+    if (!query || !query.trim()) return null;
+    const lowerQuery = query.toLowerCase().trim();
+
+    // 1. Exact substring matching against matchKeywords
+    let matched = MOCK_SUSPECTS.find(suspect => {
+        return suspect.matchKeywords.some(keyword => lowerQuery.includes(keyword.toLowerCase()));
+    });
+    if (matched) return matched;
+
+    // 2. Fuzzy matching: check for close matches (at most 1-2 char difference) for keywords longer than 4 chars
+    const queryWords = lowerQuery.split(/[^a-z0-9\u0C80-\u0CFF]+/i).filter(w => w.length >= 3);
+
+    matched = MOCK_SUSPECTS.find(suspect => {
+        return suspect.matchKeywords.some(keyword => {
+            const kw = keyword.toLowerCase();
+            if (kw.length <= 4) return false;
+
+            const maxAllowedDist = kw.length > 6 ? 2 : 1;
+
+            return queryWords.some(word => {
+                if (Math.abs(word.length - kw.length) > maxAllowedDist) return false;
+                return levenshteinDistance(word, kw) <= maxAllowedDist;
+            });
+        });
+    });
+
+    return matched || null;
+}
+
+// ==========================================================================
+// 5. RENDER STATE 2 WITH DATA & QUERY HANDLING
+// ==========================================================================
+
+/**
+ * Updates all DOM elements in State 2 to display a specific suspect's dataset or No Results state
+ * @param {Object|null} data - A suspect's `data` object or null if no match found
+ * @param {string} [queryText] - The user query text
+ */
+function renderState2WithData(data, queryText) {
+    const state2View = document.getElementById('state-2-view');
+    const answerCard = document.querySelector('.direct-answer-card');
+    const activeQueryEl = document.getElementById('active-query-text');
+    const answerHeaderEl = document.querySelector('.direct-answer-card .answer-header');
+    const answerBodyEl = document.getElementById('answer-body-text');
     const isKn = currentLang === 'kn';
 
+    if (!data) {
+        // --- NO RESULTS FOUND STATE ---
+        window.ACTIVE_ENTITY_DATA = null;
+        window.LAST_QUERY_NO_RESULTS = queryText || "Query";
+
+        if (state2View) state2View.classList.add('no-results-mode');
+        if (answerCard) answerCard.classList.add('no-results');
+
+        if (activeQueryEl && queryText) {
+            activeQueryEl.textContent = queryText;
+        }
+
+        if (answerHeaderEl) {
+            answerHeaderEl.innerHTML = `
+                <div class="ai-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>${isKn ? "ಯಾವುದೇ ಪಂದ್ಯ ಸಿಗಲಿಲ್ಲ" : "No Match Found"}</span>
+                </div>
+                <span class="confidence-badge">${isKn ? "0 ಫಲಿತಾಂಶಗಳು" : "0 Matches"}</span>
+            `;
+        }
+
+        if (answerBodyEl) {
+            const escapedQuery = escapeHtml(queryText || "");
+            answerBodyEl.innerHTML = isKn
+                ? `<strong>"${escapedQuery}"</strong> ಗಾಗಿ ಯಾವುದೇ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ. ಶಂಕಿತರ ಹೆಸರು, ACC ID, ಅಥವಾ ಅಪರಾಧದ ಪ್ರಕಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.`
+                : `No matching records found for <strong>"${escapedQuery}"</strong>. Try a suspect name, ACC ID, or crime type.`;
+        }
+        return;
+    }
+
+    // --- NORMAL MATCHED SUSPECT STATE ---
+    window.ACTIVE_ENTITY_DATA = data;
+    window.LAST_QUERY_NO_RESULTS = null;
+
+    if (state2View) state2View.classList.remove('no-results-mode');
+    if (answerCard) answerCard.classList.remove('no-results');
+
+    // Restore standard Answer Header
+    if (answerHeaderEl) {
+        answerHeaderEl.innerHTML = `
+            <div class="ai-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 16v-4" />
+                    <path d="M12 8h.01" />
+                </svg>
+                <span data-i18n="directAnswerHeader">${TRANSLATIONS[currentLang].directAnswerHeader}</span>
+            </div>
+            <span class="confidence-badge" data-i18n="confidenceBadge">${TRANSLATIONS[currentLang].confidenceBadge}</span>
+        `;
+    }
+
     // 1. Update #active-query-text
-    const activeQueryEl = document.getElementById('active-query-text');
     if (activeQueryEl) {
-        activeQueryEl.textContent = isKn ? data.queryTextKn : data.queryTextEn;
+        activeQueryEl.textContent = queryText ? queryText : (isKn ? data.queryTextKn : data.queryTextEn);
     }
 
     // 2. Update #answer-body-text innerHTML
-    const answerBodyEl = document.getElementById('answer-body-text');
     if (answerBodyEl) {
         answerBodyEl.innerHTML = isKn ? data.directAnswerKn : data.directAnswerEn;
     }
@@ -601,6 +760,61 @@ function renderState2WithData(data) {
             }
         }
     });
+
+    // Animate Stat Numbers (0 -> Target)
+    animateStatNumbers();
+}
+
+/**
+ * Animates preview card main stat numbers from 0 up to their target values over 600ms
+ */
+function animateStatNumbers() {
+    const statEls = document.querySelectorAll('.preview-card .stat-number');
+    statEls.forEach(el => {
+        const text = el.textContent || el.innerText;
+        const slashMatch = text.match(/^(\d+)\s*\/\s*(\d+)$/);
+        if (slashMatch) {
+            const targetNum = parseInt(slashMatch[1], 10);
+            const totalNum = parseInt(slashMatch[2], 10);
+            const duration = 600;
+            const startTime = performance.now();
+
+            function updateSlashCounter(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 2);
+                const currentNum = Math.floor(easeProgress * targetNum);
+                el.innerHTML = `${currentNum} <small>/ ${totalNum}</small>`;
+                if (progress < 1) {
+                    requestAnimationFrame(updateSlashCounter);
+                } else {
+                    el.innerHTML = `${targetNum} <small>/ ${totalNum}</small>`;
+                }
+            }
+            requestAnimationFrame(updateSlashCounter);
+        } else {
+            const numMatch = text.match(/^(\d+)/);
+            if (numMatch) {
+                const targetNum = parseInt(numMatch[1], 10);
+                const duration = 600;
+                const startTime = performance.now();
+
+                function updateCounter(now) {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easeProgress = 1 - Math.pow(1 - progress, 2);
+                    const currentNum = Math.floor(easeProgress * targetNum);
+                    el.textContent = currentNum;
+                    if (progress < 1) {
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        el.textContent = targetNum;
+                    }
+                }
+                requestAnimationFrame(updateCounter);
+            }
+        }
+    });
 }
 
 function switchState(stateNum) {
@@ -609,38 +823,63 @@ function switchState(stateNum) {
     const view2 = document.getElementById('state-2-view');
     const btn1 = document.getElementById('btn-state-1');
     const btn2 = document.getElementById('btn-state-2');
+    const mainContent = document.getElementById('main-content');
 
     if (stateNum === 1) {
-        view1.classList.add('active');
-        view2.classList.remove('active');
+        view1?.classList.add('active');
+        view2?.classList.remove('active', 'animate-in');
         btn1?.classList.add('active');
         btn2?.classList.remove('active');
     } else {
-        view1.classList.remove('active');
-        view2.classList.add('active');
+        view1?.classList.remove('active');
+        view2?.classList.add('active');
+        view2?.classList.remove('animate-in');
+        void view2?.offsetWidth; // Trigger reflow to restart CSS animations
+        view2?.classList.add('animate-in');
         btn1?.classList.remove('active');
         btn2?.classList.add('active');
     }
+
+    // Redirect to top of summary view instantly without scrolling lag
+    if (mainContent) {
+        mainContent.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+}
+
+function showState(stateNum) {
+    switchState(stateNum);
 }
 
 function handleQuerySubmit(userQuery) {
-    if (!userQuery) userQuery = "Show all FIRs for suspect Manjunath ACC-89241";
+    const rawQuery = (userQuery && userQuery.trim()) ? userQuery.trim() : "Show all FIRs for suspect Manjunath ACC-89241";
+    const overlay = document.getElementById('query-loading-overlay');
 
-    const lowerQuery = userQuery.toLowerCase();
-
-    // Search MOCK_SUSPECTS for an entry whose matchKeywords includes any word from lowercased userQuery
-    let matchedSuspect = MOCK_SUSPECTS.find(suspect => {
-        return suspect.matchKeywords.some(keyword => lowerQuery.includes(keyword.toLowerCase()));
-    });
-
-    if (matchedSuspect) {
-        renderState2WithData(matchedSuspect.data);
-    } else {
-        // Default to first suspect if not matched
-        renderState2WithData(MOCK_SUSPECTS[0].data);
+    if (overlay) {
+        overlay.classList.add('active');
     }
 
-    switchState(2);
+    setTimeout(() => {
+        const matchedSuspect = findSuspectByQuery(rawQuery);
+
+        if (matchedSuspect) {
+            renderState2WithData(matchedSuspect.data, rawQuery);
+        } else {
+            renderState2WithData(null, rawQuery);
+        }
+
+        switchState(2);
+
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+
+        // Reset input fields
+        const input1 = document.getElementById('chat-input-1');
+        if (input1) input1.value = '';
+        const input2 = document.getElementById('chat-input-2');
+        if (input2) input2.value = '';
+    }, 450);
 }
 
 // ==========================================================================
@@ -699,8 +938,10 @@ function toggleLanguage() {
     updateTranslations();
     renderSuggestedChips();
 
-    // Re-render current suspect entity in newly selected language
-    if (window.ACTIVE_ENTITY_DATA) {
+    // Re-render current suspect entity or no-results state in newly selected language
+    if (window.LAST_QUERY_NO_RESULTS) {
+        renderState2WithData(null, window.LAST_QUERY_NO_RESULTS);
+    } else if (window.ACTIVE_ENTITY_DATA) {
         renderState2WithData(window.ACTIVE_ENTITY_DATA);
     }
 }

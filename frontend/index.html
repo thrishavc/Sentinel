@@ -75,7 +75,7 @@
             <div class="sidebar-section">
                 <div class="section-title" data-i18n="recentQueries">Recent Queries</div>
                 <ul class="history-list" id="history-list">
-                    <li class="history-item active" data-state="2">
+                    <li class="history-item recent-list__item active" data-suspect-id="ACC-89241" data-state="2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -85,28 +85,27 @@
                             <span class="history-date">10 mins ago</span>
                         </div>
                     </li>
-                    <li class="history-item" data-state="1">
+                    <li class="history-item recent-list__item" data-suspect-id="ACC-70412" data-state="2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                         <div class="history-info">
-                            <span class="history-title" data-i18n="hist2Title">FIRs in Ramanagara district 2024</span>
+                            <span class="history-title" data-i18n="hist2Title">Suspect #70412 Cyber skimming Koramangala</span>
                             <span class="history-date">2 hours ago</span>
                         </div>
                     </li>
-                    <li class="history-item" data-state="1">
+                    <li class="history-item recent-list__item" data-suspect-id="ACC-55190" data-state="2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                         <div class="history-info">
-                            <span class="history-title" data-i18n="hist3Title">Chargesheet status for case
-                                #2024-WF-089</span>
+                            <span class="history-title" data-i18n="hist3Title">Suspect #55190 Highway dacoity Davanagere</span>
                             <span class="history-date">Yesterday</span>
                         </div>
                     </li>
-                    <li class="history-item" data-state="1">
+                    <li class="history-item recent-list__item" data-suspect-id="ACC-89241" data-state="2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -119,15 +118,6 @@
                 </ul>
             </div>
 
-            <!-- Testing State Toggle Switch in Sidebar -->
-            <div class="sidebar-section state-switcher-box">
-                <div class="section-title" data-i18n="viewStateTitle">UI State Preview</div>
-                <div class="state-btn-group">
-                    <button class="state-btn active" id="btn-state-1" data-i18n="state1Label">State 1: Empty
-                        Chat</button>
-                    <button class="state-btn" id="btn-state-2" data-i18n="state2Label">State 2: Resolved Entity</button>
-                </div>
-            </div>
 
             <div class="sidebar-footer">
                 <button class="btn-export-pdf" id="btn-export-pdf">
@@ -144,6 +134,15 @@
 
         <!-- MAIN AREA -->
         <main class="main-content" id="main-content">
+
+            <!-- Analyzing Query Loading Overlay -->
+            <div class="query-loading-overlay" id="query-loading-overlay" aria-hidden="true">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">
+                    <span class="loading-title">Analyzing Crime Intelligence Records...</span>
+                    <span class="loading-sub">Executing CCTNS SQL • Entity Resolution Active</span>
+                </div>
+            </div>
 
             <!-- STATE 1: EMPTY / CHAT STATE -->
             <div class="state-view state-1-view active" id="state-1-view">
