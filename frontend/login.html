@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel — Sign In</title>
+    <!-- Google Fonts for English and Kannada -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            background-color: var(--bg-main);
+        }
+
+        .login-card {
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border-dashed);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+            z-index: 10;
+        }
+
+        .login-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+            font-family: var(--font-mono);
+        }
+
+        .login-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 1.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        #loginDivElementId {
+            width: 100%;
+            min-height: 200px;
+        }
+    </style>
+</head>
+
+<body class="theme-dark lang-en role-investigator">
+
+    <div class="login-page-wrapper">
+        <div class="login-card">
+            <div class="login-logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="shield-icon">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                </svg>
+                <div class="logo-text" style="text-align: left;">
+                    <span class="app-name">SENTINEL</span>
+                    <span class="app-sub">Crime Records Intelligence</span>
+                </div>
+            </div>
+
+            <h1 class="login-title">Sentinel — Sign In</h1>
+            <p class="login-sub">Karnataka State Police Crime Intelligence</p>
+
+            <div id="loginDivElementId"></div>
+        </div>
+    </div>
+
+    <script src="https://static.zohocdn.com/catalyst/sdk/js/4.6.2/catalystWebSDK.js"></script>
+    <script src="/__catalyst/sdk/init.js"></script>
+    <script>
+      const config = {
+        service_url: "/index.html" // redirect here after successful login — adjust to match my actual main page filename
+      };
+      catalyst.auth.signIn("loginDivElementId", config);
+    </script>
+</body>
+
+</html>

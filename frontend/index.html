@@ -5,6 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sentinel — Bilingual KSP Crime Investigator Interface</title>
+
+    <!-- Zoho Catalyst Authentication Guard -->
+    <script src="https://static.zohocdn.com/catalyst/sdk/js/4.6.2/catalystWebSDK.js"></script>
+    <script src="/__catalyst/sdk/init.js"></script>
+    <script>
+        catalyst.auth.isUserAuthenticated()
+            .then((result) => {
+                // User is authenticated, proceed normally
+            })
+            .catch((err) => {
+                // User is not authenticated, redirect to login page
+                window.location.href = "login.html";
+            });
+    </script>
+
     <!-- Google Fonts for English and Kannada -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
