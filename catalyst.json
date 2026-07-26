@@ -6,5 +6,8 @@
       "seed_data",
       "Conversational_engine"
     ]
+  },
+  "client": {
+    "source": "frontend"
   }
 }

@@ -174,7 +174,7 @@ let currentState = 1;
 let conversationId = "session_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
 let turnId = 1;
 
-window.CONVO_ENGINE_URL = null;
+window.ACTIVE_ENTITY_DATA = null;
 
 // ==========================================================================
 // 3. INTENT RESOLUTION & BACKEND CALLS
@@ -315,7 +315,6 @@ function resolveIntent(queryText) {
     return null;
 }
 
-/**
 // ==========================================================================
 // 4. QUERY SUBMISSION & RENDER LOGIC
 // ==========================================================================

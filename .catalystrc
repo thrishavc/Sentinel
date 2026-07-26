@@ -21,7 +21,15 @@
           "idx": 1,
           "id": "60079603520",
           "name": "Development",
-          "type": 3
+          "type": 3,
+          "env_status": "Active",
+          "project_details": {
+            "project_name": "KSP",
+            "id": "46128000000013052",
+            "project_type": "Live"
+          },
+          "is_default": true,
+          "action_required": false
         }
       ]
     }
