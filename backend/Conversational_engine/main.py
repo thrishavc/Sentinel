@@ -146,18 +146,95 @@ def h_get_cases_by_district(zcql, params):
     }
 
 
-def h_get_cases_by_status(zcql, params):
-    status_name = params.get("case_status_name", "Under Investigation")
-    s = zq(zcql, f"SELECT ROWID FROM CaseStatusMaster WHERE CaseStatusName LIKE '*{esc(status_name)}*'")
-    if not s:
-        return {"results": [], "source_tables": ["CaseStatusMaster"], "summary": f"No status found matching '{status_name}'"}
+LIVE_INTENTS = {
+    "search_accused_by_name",
+    "get_cases_by_gravity",
+    "get_cases_by_status",
+    "get_chargesheet_status",
+    "get_cases_by_court",
+    "get_cases_by_crimehead"
+}
 
-    rows = zq(zcql, f"SELECT * FROM CaseMaster WHERE CaseStatusID = {s[0]['ROWID']}")
+
+def h_get_cases_by_gravity(zcql, params):
+    gravity_level = params.get("gravity_level", "Special Heinous")
+    g = zq(zcql, f"SELECT ROWID FROM GravityOffence WHERE LookupValue LIKE '*{esc(gravity_level)}*'")
+    if not g:
+        return {"results": [], "source_tables": ["GravityOffence"], "summary": f"No gravity level found matching '{gravity_level}'"}
+
+    rows = zq(zcql, f"SELECT * FROM CaseMaster WHERE GravityOffenceID = {g[0]['ROWID']}")
     results = [case_to_api_row(zcql, r) for r in rows]
     return {
         "results": results,
-        "source_tables": ["CaseMaster", "CaseStatusMaster"],
-        "summary": f"Filtered CaseMaster joined to CaseStatusMaster for status '{status_name}'"
+        "source_tables": ["CaseMaster", "GravityOffence"],
+        "summary": f"Filtered CaseMaster where gravity_level = '{gravity_level}'"
+    }
+
+
+def h_get_chargesheet_status(zcql, params):
+    crime_no = params.get("crime_no")
+    if not crime_no:
+        return {"results": [], "source_tables": ["CaseMaster"], "summary": "Missing crime_no parameter"}
+
+    c = zq(zcql, f"SELECT ROWID FROM CaseMaster WHERE CrimeNo = '{esc(crime_no)}'")
+    if not c:
+        return {"results": [], "source_tables": ["CaseMaster"], "summary": "No matching case found"}
+    case_rowid = c[0]["ROWID"]
+
+    rows = zq(zcql, f"SELECT * FROM ChargesheetDetails WHERE CaseMasterID = {case_rowid}")
+    cstype_map = {"A": "Chargesheet", "B": "False Case", "C": "Undetected"}
+    results = [{
+        "csid": r.get("CSID"),
+        "csdate": r.get("csdate"),
+        "cstype": cstype_map.get(r.get("cstype"), r.get("cstype")),
+    } for r in rows]
+
+    return {
+        "results": results,
+        "source_tables": ["CaseMaster", "ChargesheetDetails"],
+        "summary": f"Filtered ChargesheetDetails where CaseMasterID matches CrimeNo '{crime_no}'"
+    }
+
+
+def h_get_cases_by_court(zcql, params):
+    court_name = params.get("court_name", "JMFC")
+    c = zq(zcql, f"SELECT ROWID FROM Court WHERE CourtName LIKE '*{esc(court_name)}*'")
+    if not c:
+        return {"results": [], "source_tables": ["Court"], "summary": f"No court found matching '{court_name}'"}
+
+    all_cases = []
+    for court_row in c:
+        all_cases.extend(zq(zcql, f"SELECT * FROM CaseMaster WHERE CourtID = {court_row['ROWID']}"))
+
+    results = [case_to_api_row(zcql, r) for r in all_cases]
+    return {
+        "results": results,
+        "source_tables": ["CaseMaster", "Court"],
+        "summary": f"Filtered CaseMaster joined to Court where CourtName contains '{court_name}'"
+    }
+
+
+def h_get_cases_by_crimehead(zcql, params):
+    crime_head = params.get("crime_head")
+    crime_subhead = params.get("crime_subhead")
+    if not crime_head and not crime_subhead:
+        return {"results": [], "source_tables": ["CrimeHead"], "summary": "crime_head or crime_subhead is required"}
+
+    all_cases = []
+    if crime_subhead:
+        sh = zq(zcql, f"SELECT ROWID FROM CrimeSubHead WHERE CrimeHeadName LIKE '*{esc(crime_subhead)}*'")
+        if sh:
+            all_cases = zq(zcql, f"SELECT * FROM CaseMaster WHERE CrimeMinorHeadID = {sh[0]['ROWID']}")
+    else:
+        ch = zq(zcql, f"SELECT ROWID FROM CrimeHead WHERE CrimeGroupName LIKE '*{esc(crime_head)}*'")
+        if ch:
+            all_cases = zq(zcql, f"SELECT * FROM CaseMaster WHERE CrimeMajorHeadID = {ch[0]['ROWID']}")
+
+    results = [case_to_api_row(zcql, r) for r in all_cases]
+    return {
+        "results": results,
+        "source_tables": ["CaseMaster", "CrimeHead", "CrimeSubHead"],
+        "summary": f"Filtered CaseMaster where crime_subhead='{crime_subhead}'" if crime_subhead else f"Filtered CaseMaster where crime_head='{crime_head}'"
     }
 
 
@@ -360,12 +437,24 @@ def handler(arg1, arg2):
 
         intent, params = resolve_query_intent(query)
 
-        if intent == "search_accused_by_name":
-            res_data = h_search_accused_by_name(zcql, params)
+        if intent in LIVE_INTENTS:
+            if intent == "search_accused_by_name":
+                res_data = h_search_accused_by_name(zcql, params)
+                # Disambiguation / candidate check scoped ONLY to search_accused_by_name
+                if res_data and len(res_data.get("results", [])) > 1:
+                    res_data["clarification_needed"] = True
+            elif intent == "get_cases_by_gravity":
+                res_data = h_get_cases_by_gravity(zcql, params)
+            elif intent == "get_cases_by_status":
+                res_data = h_get_cases_by_status(zcql, params)
+            elif intent == "get_chargesheet_status":
+                res_data = h_get_chargesheet_status(zcql, params)
+            elif intent == "get_cases_by_court":
+                res_data = h_get_cases_by_court(zcql, params)
+            elif intent == "get_cases_by_crimehead":
+                res_data = h_get_cases_by_crimehead(zcql, params)
         elif intent == "get_case_by_crimeno":
             res_data = h_get_case_by_crimeno(zcql, params)
-        elif intent == "get_cases_by_status":
-            res_data = h_get_cases_by_status(zcql, params)
         else:
             res_data = h_get_cases_by_district(zcql, params)
 
