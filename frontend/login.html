@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -19,23 +19,45 @@
             align-items: center;
             justify-content: center;
             padding: 1.5rem;
-            background-color: var(--bg-main);
+            background-color: var(--paper);
         }
 
-        .login-card {
-            background-color: var(--bg-card);
-            border: 1px dashed var(--border-dashed);
-            border-radius: var(--radius-lg);
-            padding: 2.5rem 2rem;
+        .login-case-file {
+            background-color: var(--paper);
+            border: 1px solid rgba(18, 24, 31, 0.25);
+            border-radius: 2px;
             width: 100%;
             max-width: 440px;
             display: flex;
             flex-direction: column;
+            box-shadow: none;
+            overflow: hidden;
+        }
+
+        .case-file-header {
+            background-color: var(--navy);
+            color: var(--paper);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .header-star-icon {
+            color: var(--brass);
+        }
+
+        .case-file-body {
+            padding: 2rem 1.75rem;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             text-align: center;
-            box-shadow: var(--shadow-card);
-            z-index: 10;
-            overflow: visible;
         }
 
         .login-logo {
@@ -45,21 +67,27 @@
             margin-bottom: 1rem;
         }
 
+        .login-logo .shield-icon {
+            color: var(--navy);
+        }
+
         .login-title {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #FFFFFF;
+            color: var(--ink);
             letter-spacing: 1px;
             margin-bottom: 0.25rem;
-            font-family: var(--font-mono);
+            font-family: var(--font-heading);
+            text-transform: uppercase;
         }
 
         .login-sub {
             font-size: 0.78rem;
-            color: var(--text-muted);
+            color: var(--khaki);
             margin-bottom: 1.75rem;
             text-transform: uppercase;
             letter-spacing: 0.8px;
+            font-family: var(--font-heading);
         }
 
         #loginDivElementId {
@@ -80,26 +108,35 @@
     </style>
 </head>
 
-<body class="theme-dark lang-en role-investigator">
+<body class="theme-dark lang-en role-sub-inspector">
 
     <div class="login-page-wrapper">
-        <div class="login-card">
-            <div class="login-logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round" class="shield-icon">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <path d="m9 12 2 2 4-4" />
+        <div class="login-case-file">
+            <div class="case-file-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="header-star-icon">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
-                <div class="logo-text" style="text-align: left;">
-                    <span class="app-name">SENTINEL</span>
-                    <span class="app-sub">Crime Records Intelligence</span>
-                </div>
+                <span>KARNATAKA STATE POLICE</span>
             </div>
+            <div class="case-file-body">
+                <div class="login-logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" class="shield-icon">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="m9 12 2 2 4-4" />
+                    </svg>
+                    <div class="logo-text" style="text-align: left;">
+                        <span class="app-name" style="color: var(--navy); font-family: var(--font-heading);">SENTINEL</span>
+                        <span class="app-sub" style="color: var(--khaki);">Crime Records Intelligence</span>
+                    </div>
+                </div>
 
-            <h1 class="login-title">Sentinel — Sign In</h1>
-            <p class="login-sub">Karnataka State Police Crime Intelligence</p>
+                <h1 class="login-title">Sentinel — Sign In</h1>
+                <p class="login-sub">Case Records Intelligence Terminal</p>
 
-            <div id="loginDivElementId"></div>
+                <div id="loginDivElementId"></div>
+            </div>
         </div>
     </div>
 

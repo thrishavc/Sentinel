@@ -886,37 +886,38 @@ function applyRoleToUI(role) {
     if (!rawTarget) return;
 
     const cleanRole = String(rawTarget).trim().toLowerCase();
-    const isSupervisor = (cleanRole === "supervisor" || cleanRole === "app administrator");
-    const mappedRole = isSupervisor ? "Supervisor" : "Investigator";
+    const isInspector = (cleanRole === "inspector" || cleanRole === "app administrator" || cleanRole === "supervisor");
+    const mappedRole = isInspector ? "Inspector" : "Sub-Inspector";
     window.currentUserRole = mappedRole;
 
     // Update body class dynamically
     if (document.body) {
-        document.body.classList.remove('role-investigator', 'role-supervisor', 'role-admin');
-        document.body.classList.add(isSupervisor ? 'role-supervisor' : 'role-investigator');
+        document.body.classList.remove('role-investigator', 'role-supervisor', 'role-admin', 'role-sub-inspector', 'role-inspector');
+        document.body.classList.add(isInspector ? 'role-inspector' : 'role-sub-inspector');
     }
 
     // Update role badge UI with distinct icon and text
     const badgeText = document.getElementById('role-badge-text');
     if (badgeText) {
-        if (isSupervisor) {
-            badgeText.className = 'role-badge supervisor-badge';
+        const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+        if (isInspector) {
+            badgeText.className = 'role-badge inspector-badge';
             badgeText.innerHTML = `
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <span>Supervisor</span>
+                <span data-i18n="roleSupervisor">${t.roleSupervisor || "Inspector"}</span>
             `;
         } else {
-            badgeText.className = 'role-badge investigator-badge';
+            badgeText.className = 'role-badge sub-inspector-badge';
             badgeText.innerHTML = `
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                 </svg>
-                <span>Investigator</span>
+                <span data-i18n="roleInvestigator">${t.roleInvestigator || "Sub-Inspector"}</span>
             `;
         }
     }
@@ -928,10 +929,10 @@ function applyRoleToUI(role) {
         roleToggleBtn.setAttribute('title', `Assigned Role: ${mappedRole}`);
     }
 
-    // Gate Export as PDF button to Supervisor only
+    // Gate Export as PDF button to Inspector only
     const exportBtn = document.getElementById('btn-export-pdf');
     if (exportBtn) {
-        exportBtn.style.display = isSupervisor ? '' : 'none';
+        exportBtn.style.display = isInspector ? '' : 'none';
     }
 
     renderSuggestedChips();

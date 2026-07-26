@@ -48,7 +48,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -111,13 +111,8 @@
                 draw() {
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = this.isAmber ? '#F59E0B' : '#2A2A38';
-                    if (this.isAmber) {
-                        ctx.shadowBlur = 6;
-                        ctx.shadowColor = '#F59E0B';
-                    } else {
-                        ctx.shadowBlur = 0;
-                    }
+                    ctx.fillStyle = this.isAmber ? '#1b2a4a' : '#6b6650';
+                    ctx.shadowBlur = 0;
                     ctx.fill();
                 }
             }
@@ -140,13 +135,13 @@
                         const dist = Math.sqrt(dx * dx + dy * dy);
 
                         if (dist < MAX_DIST) {
-                            const alpha = (1 - dist / MAX_DIST) * 0.12;
+                            const alpha = (1 - dist / MAX_DIST) * 0.08;
                             ctx.beginPath();
                             ctx.moveTo(particles[i].x, particles[i].y);
                             ctx.lineTo(particles[j].x, particles[j].y);
                             ctx.strokeStyle = (particles[i].isAmber || particles[j].isAmber)
-                                ? `rgba(245, 158, 11, ${alpha * 1.5})`
-                                : `rgba(63, 63, 82, ${alpha})`;
+                                ? `rgba(27, 42, 74, ${alpha * 1.5})`
+                                : `rgba(107, 102, 80, ${alpha})`;
                             ctx.lineWidth = 1;
                             ctx.stroke();
                         }
@@ -199,7 +194,7 @@
             <div class="role-selector-container">
                 <span class="control-label" data-i18n="roleLabel">Role:</span>
                 <div class="role-toggle-btn" id="role-toggle-btn" style="cursor: default; pointer-events: none;">
-                    <span class="role-badge investigator-badge" id="role-badge-text">
+                    <span class="role-badge sub-inspector-badge" id="role-badge-text">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
