@@ -11,7 +11,7 @@
 // ==========================================================================
 // 1. LIVE BACKEND CONFIGURATION
 // ==========================================================================
-const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/execute";
+const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/";
 
 // ==========================================================================
 // 2. BILINGUAL TRANSLATION DICTIONARY

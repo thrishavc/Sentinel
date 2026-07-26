@@ -1,5 +1,5 @@
 """
-Conversational_engine - Conversational AI Engine Function for Sentinel
+Conversational_engine - Conversational AI Engine Function for Sentinel (Advanced I/O & Basic I/O compatible)
 Resolves natural language { query, conversation_id, turn_id } -> structured JSON response with extracted_payload, per frontend contract.
 """
 
@@ -129,7 +129,7 @@ def h_get_cases_by_district(zcql, params):
     d = zq(zcql, f"SELECT ROWID FROM District WHERE DistrictName LIKE '*{esc(district_name)}*'")
     if not d:
         return {"results": [], "source_tables": ["District"], "summary": f"No district found matching '{district_name}'"}
-    
+
     district_rowid = d[0]["ROWID"]
     units = zq(zcql, f"SELECT ROWID FROM Unit WHERE DistrictID = {district_rowid}")
     unit_rowids = [u["ROWID"] for u in units]
@@ -246,11 +246,8 @@ def apply_cors_headers(target):
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept'
     }
-    if hasattr(target, 'headers') and isinstance(target.headers, dict):
-        for k, v in headers.items():
-            target.headers[k] = v
     if hasattr(target, 'set_header') and callable(getattr(target, 'set_header')):
         for k, v in headers.items():
             try:
@@ -263,75 +260,103 @@ def apply_cors_headers(target):
                 target.set_response_header(k, v)
             except Exception:
                 pass
+    if hasattr(target, 'headers') and isinstance(target.headers, dict):
+        for k, v in headers.items():
+            target.headers[k] = v
 
 
 # ---------------------------------------------------------------------------
-# Main Handler Entrypoint
+# Main Handler Entrypoint (Advanced I/O and Basic I/O signature support)
 # ---------------------------------------------------------------------------
 
-def handler(context, basicio):
+def handler(arg1, arg2):
     print("=== CONVERSATIONAL_ENGINE FUNCTION INVOKED ===")
-    if hasattr(context, 'log') and callable(getattr(context, 'log')):
+
+    req = arg1
+    res = arg2
+
+    apply_cors_headers(res)
+    apply_cors_headers(req)
+
+    method = None
+    try:
+        if hasattr(req, 'get_request_method') and callable(getattr(req, 'get_request_method')):
+            method = req.get_request_method()
+        elif hasattr(req, 'method'):
+            method = req.method
+    except Exception:
+        pass
+
+    is_options = (method and str(method).upper() == 'OPTIONS')
+    if not is_options:
         try:
-            context.log("=== CONVERSATIONAL_ENGINE FUNCTION INVOKED ===")
+            if hasattr(req, 'get_request_header') and callable(getattr(req, 'get_request_header')):
+                if req.get_request_header('Access-Control-Request-Method') or req.get_request_header('access-control-request-method'):
+                    is_options = True
         except Exception:
             pass
 
-    apply_cors_headers(basicio)
+    if is_options:
+        apply_cors_headers(res)
+        apply_cors_headers(req)
+        if hasattr(res, 'set_status') and callable(getattr(res, 'set_status')):
+            try:
+                res.set_status(200)
+            except Exception:
+                pass
+        elif hasattr(res, 'set_status_code') and callable(getattr(res, 'set_status_code')):
+            try:
+                res.set_status_code(200)
+            except Exception:
+                pass
+
+        if hasattr(res, 'send_json') and callable(getattr(res, 'send_json')):
+            res.send_json({"status": "ok"})
+        elif hasattr(res, 'send') and callable(getattr(res, 'send')):
+            res.send(json.dumps({"status": "ok"}))
+        elif hasattr(res, 'write') and callable(getattr(res, 'write')):
+            res.write(json.dumps({"status": "ok"}))
+            if hasattr(req, 'close') and callable(getattr(req, 'close')):
+                req.close()
+        return
+
+    query = ""
+    conversation_id = ""
+    turn_id = 1
+
+    # Extract JSON body
+    if hasattr(req, 'get_json') and callable(getattr(req, 'get_json')):
+        try:
+            body = req.get_json()
+            if body:
+                query = body.get("query") or ""
+                conversation_id = body.get("conversation_id") or ""
+                turn_id = body.get("turn_id") or 1
+        except Exception:
+            pass
+
+    if not query and hasattr(req, 'get_argument') and callable(getattr(req, 'get_argument')):
+        try:
+            query = req.get_argument("query") or ""
+            conversation_id = req.get_argument("conversation_id") or ""
+            turn_id = req.get_argument("turn_id") or 1
+        except Exception:
+            pass
+
+    if not query and hasattr(req, 'get_request_body') and callable(getattr(req, 'get_request_body')):
+        try:
+            raw = req.get_request_body()
+            if raw:
+                body = json.loads(raw)
+                query = body.get("query") or ""
+                conversation_id = body.get("conversation_id") or ""
+                turn_id = body.get("turn_id") or 1
+        except Exception:
+            pass
 
     try:
         app = zcatalyst_sdk.initialize()
         zcql = app.zcql()
-
-        # Handle preflight OPTIONS request
-        req_method = None
-        if hasattr(basicio, 'get_request_method') and callable(getattr(basicio, 'get_request_method')):
-            try:
-                req_method = basicio.get_request_method()
-            except Exception:
-                pass
-        elif hasattr(basicio, 'method'):
-            req_method = basicio.method
-
-        if req_method and str(req_method).upper() == 'OPTIONS':
-            apply_cors_headers(basicio)
-            if hasattr(basicio, 'set_status_code'):
-                try:
-                    basicio.set_status_code(200)
-                except Exception:
-                    pass
-            basicio.write(json.dumps({"status": "ok"}))
-            context.close()
-            return
-
-        # Extract POST body arguments
-        query = ""
-        conversation_id = ""
-        turn_id = 1
-
-        try:
-            query = basicio.get_argument("query") or ""
-            conversation_id = basicio.get_argument("conversation_id") or ""
-            turn_id = basicio.get_argument("turn_id") or 1
-        except Exception:
-            pass
-
-        if not query and hasattr(basicio, 'get_request_body') and callable(getattr(basicio, 'get_request_body')):
-            try:
-                raw_body = basicio.get_request_body()
-                if raw_body:
-                    body_json = json.loads(raw_body)
-                    query = body_json.get("query") or ""
-                    conversation_id = body_json.get("conversation_id") or ""
-                    turn_id = body_json.get("turn_id") or 1
-            except Exception:
-                pass
-
-        if hasattr(context, 'log') and callable(getattr(context, 'log')):
-            try:
-                context.log(f"Processing query: '{query}', conversation_id: {conversation_id}, turn_id: {turn_id}")
-            except Exception:
-                pass
 
         intent, params = resolve_query_intent(query)
 
@@ -360,37 +385,40 @@ def handler(context, basicio):
                 "intent": intent
             }
         }
-
-    except Exception as top_level_err:
-        print(f"Error in Conversational_engine: {top_level_err}")
-        if hasattr(context, 'log') and callable(getattr(context, 'log')):
-            try:
-                context.log(f"Error in Conversational_engine: {top_level_err}")
-            except Exception:
-                pass
-
+    except Exception as err:
+        print(f"Error in Conversational_engine: {err}")
         response_payload = {
             "status": "error",
             "extracted_payload": {
-                "nlg_output": f"Backend processing error: {str(top_level_err)}",
+                "nlg_output": f"Backend processing error: {str(err)}",
                 "results": [],
                 "evidence": {
                     "source_tables": [],
-                    "query_summary": f"Exception raised: {str(top_level_err)}"
+                    "query_summary": f"Exception raised: {str(err)}"
                 },
                 "intent": "error"
             },
-            "error": {"code": "INTERNAL_ERROR", "message": str(top_level_err)}
+            "error": {"code": "INTERNAL_ERROR", "message": str(err)}
         }
 
-    apply_cors_headers(basicio)
+    apply_cors_headers(res)
 
-    try:
-        basicio.write(json.dumps(response_payload))
-    except Exception as write_err:
-        print(f"Error writing response JSON: {write_err}")
+    if hasattr(res, 'set_status') and callable(getattr(res, 'set_status')):
+        try:
+            res.set_status(200)
+        except Exception:
+            pass
+    elif hasattr(res, 'set_status_code') and callable(getattr(res, 'set_status_code')):
+        try:
+            res.set_status_code(200)
+        except Exception:
+            pass
 
-    try:
-        context.close()
-    except Exception:
-        pass
+    if hasattr(res, 'send_json') and callable(getattr(res, 'send_json')):
+        res.send_json(response_payload)
+    elif hasattr(res, 'send') and callable(getattr(res, 'send')):
+        res.send(json.dumps(response_payload))
+    elif hasattr(res, 'write') and callable(getattr(res, 'write')):
+        res.write(json.dumps(response_payload))
+        if hasattr(req, 'close') and callable(getattr(req, 'close')):
+            req.close()

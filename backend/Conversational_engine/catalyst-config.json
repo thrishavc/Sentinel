@@ -2,10 +2,21 @@
 	"deployment": {
 		"name": "Conversational_engine",
 		"stack": "python_3_11",
-		"type": "basicio",
+		"type": "advancedio",
 		"env_variables": {}
 	},
 	"execution": {
 		"main": "main.py"
+	},
+	"cors": {
+		"allowed_origins": [
+			"https://sentinel-dfttsjld.onslate.in",
+			"https://ksp-60079603520.development.catalystserverless.in",
+			"http://localhost:8085",
+			"http://localhost:3000",
+			"http://localhost"
+		],
+		"allowed_methods": ["GET", "POST", "OPTIONS"],
+		"allowed_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 	}
 }
