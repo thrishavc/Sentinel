@@ -1,76 +1,45 @@
 /* ==========================================================================
-   SENTINEL — CATALYST EMBEDDED IFRAME / AUTH WIDGET DARK THEME OVERRIDES
+   SENTINEL — CATALYST EMBEDDED IFRAME DARK THEME (NARROWLY SCOPED)
    ========================================================================== */
 
-:root {
-    --bg-main: #121214;
-    --bg-surface: #18181B;
-    --bg-card: #1E1E2A;
-    --bg-card-hover: #28282D;
-    --bg-input: #2A2A38;
-    --border-color: #3F3F52;
-    --border-dashed: rgba(245, 158, 11, 0.25);
-    --border-focus: #F59E0B;
-    --text-main: #E5E7EB;
-    --text-muted: #9CA3AF;
-    --text-sub: #D4D4D8;
-    --accent-amber: #F59E0B;
-    --accent-amber-hover: #D97706;
-    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+/* 1. Global Font & Colors for Body & Main Containers */
+body {
+    background-color: #1E1E2A !important;
+    color: #E5E7EB !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-/* Force dark background & full width on iframe container, html & body */
-html, 
-body, 
-div, 
-form, 
-#main_container, 
+/* 2. Specific Class Target Backgrounds & Text Colors */
 .za-login-container, 
 .zp-login-container, 
 .signup-container, 
 .signin-box, 
 .login-container, 
-.form-container {
+.form-container,
+#main_container {
     background-color: #1E1E2A !important;
     color: #E5E7EB !important;
-    font-family: var(--font-primary, sans-serif) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: visible !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
-html, body {
-    min-height: 100% !important;
-    height: auto !important;
-}
-
-/* Dark Styling for Labels, Headings & Text */
-label, 
-p, 
-span, 
-h1, 
-h2, 
-h3, 
-h4, 
-div, 
+/* 3. Text Colors for Specific Labels & Titles */
 .field-label, 
 .textbox-label, 
 .title, 
 .field_label, 
-.signin_title {
+.signin_title,
+.label_head {
     color: #E5E7EB !important;
 }
 
-.sub-title, .forgot-pass, .help-text, .secondary-text, .forgot_password {
+.sub-title, 
+.forgot-pass, 
+.help-text, 
+.secondary-text, 
+.forgot_password {
     color: #9CA3AF !important;
 }
 
-/* Input Fields (Dark #2A2A38 background, light #E5E7EB text, visible 1px solid #3F3F52 border) */
-input, 
+/* 4. Input Field Dark Styling */
 input[type="text"], 
 input[type="email"], 
 input[type="password"], 
@@ -83,17 +52,15 @@ textarea,
     color: #E5E7EB !important;
     border: 1px solid #3F3F52 !important;
     border-radius: 6px !important;
-    padding: 0.75rem 1rem !important;
     font-size: 0.95rem !important;
     outline: none !important;
-    box-shadow: none !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
     caret-color: #E5E7EB !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
 }
 
-input:focus, 
+input[type="text"]:focus, 
+input[type="email"]:focus, 
+input[type="password"]:focus, 
+input[type="number"]:focus, 
 select:focus, 
 textarea:focus,
 .textbox:focus {
@@ -103,7 +70,7 @@ textarea:focus,
     box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
 }
 
-/* Fix Autofill White Flash */
+/* 5. Fix Webkit Autofill White Flash */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -112,14 +79,12 @@ input:-webkit-autofill:active {
     -webkit-text-fill-color: #E5E7EB !important;
     border: 1px solid #F59E0B !important;
     caret-color: #E5E7EB !important;
-    transition: background-color 5000s ease-in-out 0s !important;
 }
 
-/* Primary Action Buttons (Amber Accent #F59E0B with dark text #121214) */
+/* 6. Primary Action Button Styling */
 button, 
 input[type="submit"], 
 input[type="button"], 
-.btn, 
 .btn-primary, 
 .btn-submit, 
 .btn-login, 
@@ -130,13 +95,9 @@ input[type="button"],
     color: #121214 !important;
     border: none !important;
     border-radius: 6px !important;
-    padding: 0.75rem 1.25rem !important;
     font-weight: 700 !important;
     font-size: 0.95rem !important;
-    font-family: var(--font-primary, sans-serif) !important;
     cursor: pointer !important;
-    width: 100% !important;
-    transition: background-color 0.2s ease, transform 0.1s ease !important;
 }
 
 button:hover, 
@@ -148,7 +109,7 @@ input[type="button"]:hover,
     color: #121214 !important;
 }
 
-/* Links */
+/* 7. Hyperlinks */
 a {
     color: #F59E0B !important;
     text-decoration: none !important;
@@ -156,15 +117,4 @@ a {
 
 a:hover {
     text-decoration: underline !important;
-}
-
-/* Remove internal scrollbars */
-html, body, ::-webkit-scrollbar {
-    overflow: visible !important;
-}
-
-::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
 }

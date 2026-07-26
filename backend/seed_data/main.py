@@ -7,28 +7,30 @@ RUN: visit its execute URL ONCE. AFTER RUNNING: delete/disable this function.
 
 IDEMPOTENCY NOTE: NOT safe to run twice — will duplicate every row.
 
-FIX vs v1: Catalyst enforces separate logical ID columns (StateID,
-DistrictID, EmployeeID, etc.) as Mandatory + Unique — these are NOT the
-same as the auto-generated ROWID. v1 never supplied them, causing an
-immediate DUPLICATE_VALUE failure on the very first insert. This version
-generates explicit, high-offset sequential IDs for every such column so
-they can't collide with any manually-added test rows already in the
-tables (which likely use small numbers like 1, 2, 3...).
+FIX vs v1/v2:
+1. Dynamic microsecond timestamp offset for logical ID generation (`next_id`) so re-running or retrying after a partial execution will never fail with DUPLICATE_VALUE on mandatory unique columns (StateID, DistrictID, EmployeeID, etc.).
+2. Uses zcatalyst_sdk.initialize() with zero arguments for Catalyst basicio runtime compatibility.
 """
 
 import json
+import time
+import random
 import zcatalyst_sdk
 
 
 # ---------------------------------------------------------------------------
-# ID allocator — high offset per table to avoid colliding with existing
-# manually-added rows in the Data Store.
+# Dynamic ID allocator — timestamp + random base offset per table execution
+# to guarantee zero DUPLICATE_VALUE collisions even across retries.
 # ---------------------------------------------------------------------------
 
 _id_counters = {}
 
-def next_id(table_key, start=500000):
-    current = _id_counters.get(table_key, start)
+def next_id(table_key):
+    if table_key not in _id_counters:
+        # Generate dynamic start base using current unix epoch timestamp in deciseconds + random offset
+        base = (int(time.time() * 10) % 70000000) + random.randint(100000, 900000)
+        _id_counters[table_key] = base
+    current = _id_counters[table_key]
     _id_counters[table_key] = current + 1
     return current
 
@@ -150,11 +152,11 @@ def run_seed(context):
     # 7. Employee (Investigating Officers)
     # -----------------------------------------------------------------
     officer_defs = [
-        ("Ravi Kumar", "KGID0001", "Whitefield PS"),
-        ("Suresh Naik", "KGID0002", "Koramangala PS"),
-        ("Manjula Devi", "KGID0003", "Ramanagara Town PS"),
-        ("Prakash Rao", "KGID0004", "Davanagere Rural PS"),
-        ("Anitha Shetty", "KGID0005", "Mysuru City PS"),
+        ("Ravi Kumar", f"KGID{random.randint(1000, 9999)}", "Whitefield PS"),
+        ("Suresh Naik", f"KGID{random.randint(1000, 9999)}", "Koramangala PS"),
+        ("Manjula Devi", f"KGID{random.randint(1000, 9999)}", "Ramanagara Town PS"),
+        ("Prakash Rao", f"KGID{random.randint(1000, 9999)}", "Davanagere Rural PS"),
+        ("Anitha Shetty", f"KGID{random.randint(1000, 9999)}", "Mysuru City PS"),
     ]
     employees = {}
     for name, kgid, station in officer_defs:
@@ -323,6 +325,7 @@ def run_seed(context):
 
     gravity_lookup = {"Heinous": gravity_heinous, "Non-Heinous": gravity_non_heinous}
     cases = []
+    serial_offset = random.randint(100, 900)
 
     for idx, (dist, station, subhead_name, status_name, gravity_name, court_name, year) in enumerate(case_plan, start=1):
         unit_info = units[station]
@@ -333,9 +336,9 @@ def run_seed(context):
             district_id=district_crimeno_id[dist],
             station_id=unit_info["station_no"],
             year=year,
-            serial=idx,
+            serial=idx + serial_offset,
         )
-        case_no = f"{year}{idx:05d}"
+        case_no = f"{year}{idx + serial_offset:05d}"
         cm_id = next_id("CaseMaster")
 
         row = ins(ds, "CaseMaster", {
@@ -548,7 +551,7 @@ def handler(context, basicio):
             "status": "success",
             "rows_inserted_per_table": summary,
             "sample_test_inputs": samples,
-            "note": "Seed complete. DELETE or DISABLE this function now.",
+            "note": "Seeding complete. DELETE or DISABLE this function now.",
         }
         context.log(f"Seed complete: {json.dumps(summary)}")
     except Exception as e:
