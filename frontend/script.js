@@ -11,7 +11,7 @@
 // ==========================================================================
 // 1. LIVE BACKEND CONFIGURATION
 // ==========================================================================
-const BACKEND_URL = "https://ksp-60079603520.development.catalystserverless.in/server/crime_query_resolver/execute";
+const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/";
 
 // ==========================================================================
 // 2. BILINGUAL TRANSLATION DICTIONARY
@@ -317,61 +317,6 @@ function resolveIntent(queryText) {
 }
 
 /**
- * CALL BACKEND API
- * POSTs to Catalyst serverless function and double-parses the `output` JSON string field.
- *
- * @param {string} intent
- * @param {Object} parameters
- * @returns {Promise<Object>} Parsed response object
- */
-async function callBackend(intent, parameters = {}) {
-    // Role gating check: restrict pattern analysis intents to Inspector level only
-    const currentRoleClean = (window.currentUserRole || "").trim().toLowerCase();
-    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor");
-    if ((intent === "get_repeat_offenders" || intent === "get_accused_network" || intent === "get_mo_matches") && !isInspector) {
-        throw new Error("This feature requires Inspector-level access.");
-    }
-
-    const payload = {
-        intent,
-        parameters,
-        conversation_id: "conv_" + Date.now(),
-        turn_id: 1
-    };
-
-    const response = await fetch(BACKEND_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    let parsed;
-    if (data && typeof data.output === "string") {
-        try {
-            parsed = JSON.parse(data.output);
-        } catch (e) {
-            throw new Error("Failed to parse backend output JSON string: " + e.message);
-        }
-    } else if (data && typeof data.output === "object" && data.output !== null) {
-        parsed = data.output;
-    } else {
-        parsed = data;
-    }
-
-    if (parsed.status === "error") {
-        const errorMsg = (parsed.error && parsed.error.message) || parsed.message || "Backend error occurred";
-        throw new Error(errorMsg);
-    }
-
-    return parsed;
-}
-
 // ==========================================================================
 // 4. QUERY SUBMISSION & RENDER LOGIC
 // ==========================================================================
@@ -403,7 +348,7 @@ function setLoadingOverlay(active) {
     }
 }
 
-async function sendConversationalQuery(userQuery) {
+async function callBackend(userQuery) {
   try {
     console.log(`[CONVO ENGINE REQUEST] conversation_id: ${conversationId}, turn_id: ${turnId}, query: "${userQuery}"`);
     const response = await fetch(CONVO_ENGINE_URL, {
@@ -448,7 +393,7 @@ async function handleQuerySubmit(userQuery) {
     }
 
     try {
-        const convoData = await sendConversationalQuery(rawQuery);
+        const convoData = await callBackend(rawQuery);
         if (convoData && convoData.status && convoData.status !== "success") {
             const errorMsg = (convoData.error && convoData.error.message) || convoData.message || "Backend Query Error";
             renderErrorState(errorMsg, rawQuery);
