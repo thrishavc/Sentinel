@@ -23,9 +23,8 @@
         function resetIdleTimer() {
             clearTimeout(idleTimer);
             idleTimer = setTimeout(() => {
-                catalyst.auth.signOut().then(() => {
-                    window.location.href = "/login.html";
-                });
+                var redirectURL = "/login.html";
+                catalyst.auth.signOut(redirectURL);
             }, 10 * 60 * 1000); // 10 minutes
         }
         ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(evt =>
@@ -131,7 +130,8 @@
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                         <div class="history-info">
-                            <span class="history-title" data-i18n="hist2Title">Suspect #70412 Cyber skimming Koramangala</span>
+                            <span class="history-title" data-i18n="hist2Title">Suspect #70412 Cyber skimming
+                                Koramangala</span>
                             <span class="history-date">2 hours ago</span>
                         </div>
                     </li>
@@ -141,7 +141,8 @@
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                         <div class="history-info">
-                            <span class="history-title" data-i18n="hist3Title">Suspect #55190 Highway dacoity Davanagere</span>
+                            <span class="history-title" data-i18n="hist3Title">Suspect #55190 Highway dacoity
+                                Davanagere</span>
                             <span class="history-date">Yesterday</span>
                         </div>
                     </li>
@@ -576,9 +577,8 @@ WHERE f.accused_id = 'ACC-89241' AND f.district IN ('Whitefield', 'Ramanagara');
     <script src="animations.js"></script>
     <script>
         document.getElementById('btn-signout')?.addEventListener('click', () => {
-            catalyst.auth.signOut().then(() => {
-                window.location.href = "/login.html";
-            });
+            var redirectURL = "/login.html";
+            catalyst.auth.signOut(redirectURL);
         });
     </script>
 </body>
