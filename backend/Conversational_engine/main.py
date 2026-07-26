@@ -1,6 +1,13 @@
 """
 Conversational_engine - Conversational AI Engine Function for Sentinel (Advanced I/O & Basic I/O compatible)
 Resolves natural language { query, conversation_id, turn_id } -> structured JSON response with extracted_payload, per frontend contract.
+
+CORRECTED:
+1. Added missing h_get_cases_by_status() (was called but never defined -> NameError).
+2. handler() now reads "intent" / "parameters" directly from the request body when
+   present (this is what Conversational_engine's call_backend_intent() actually sends),
+   instead of always re-deriving intent from a "query" field that call_backend_intent
+   never sends in the first place.
 """
 
 import json
@@ -146,16 +153,6 @@ def h_get_cases_by_district(zcql, params):
     }
 
 
-LIVE_INTENTS = {
-    "search_accused_by_name",
-    "get_cases_by_gravity",
-    "get_cases_by_status",
-    "get_chargesheet_status",
-    "get_cases_by_court",
-    "get_cases_by_crimehead"
-}
-
-
 def h_get_cases_by_gravity(zcql, params):
     gravity_level = params.get("gravity_level", "Special Heinous")
     g = zq(zcql, f"SELECT ROWID FROM GravityOffence WHERE LookupValue LIKE '*{esc(gravity_level)}*'")
@@ -168,6 +165,23 @@ def h_get_cases_by_gravity(zcql, params):
         "results": results,
         "source_tables": ["CaseMaster", "GravityOffence"],
         "summary": f"Filtered CaseMaster where gravity_level = '{gravity_level}'"
+    }
+
+
+def h_get_cases_by_status(zcql, params):
+    """NEW - this was called by handler() but was missing entirely, causing a
+    NameError any time the resolved/explicit intent was 'get_cases_by_status'."""
+    case_status_name = params.get("case_status_name", "Under Investigation")
+    s = zq(zcql, f"SELECT ROWID FROM CaseStatusMaster WHERE CaseStatusName LIKE '*{esc(case_status_name)}*'")
+    if not s:
+        return {"results": [], "source_tables": ["CaseStatusMaster"], "summary": f"No case status found matching '{case_status_name}'"}
+
+    rows = zq(zcql, f"SELECT * FROM CaseMaster WHERE CaseStatusID = {s[0]['ROWID']}")
+    results = [case_to_api_row(zcql, r) for r in rows]
+    return {
+        "results": results,
+        "source_tables": ["CaseMaster", "CaseStatusMaster"],
+        "summary": f"Filtered CaseMaster where case_status = '{case_status_name}'"
     }
 
 
@@ -238,19 +252,28 @@ def h_get_cases_by_crimehead(zcql, params):
     }
 
 
+LIVE_INTENTS = {
+    "search_accused_by_name",
+    "get_cases_by_gravity",
+    "get_cases_by_status",
+    "get_chargesheet_status",
+    "get_cases_by_court",
+    "get_cases_by_crimehead"
+}
+
+
 def resolve_query_intent(query):
-    """Simple NLU query intent parser for conversational queries."""
+    """Fallback NLU parser - only used when the caller didn't send an explicit
+    'intent' + 'parameters' pair (e.g. a raw free-text query from some other caller)."""
     if not query:
         return "get_cases_by_district", {"district_name": "Bengaluru City"}
 
     q_lower = query.lower()
 
-    # 1. Crime No / FIR search
     cno_match = re.search(r'\b(fir|case|crime)\s*(no|number|#)?\s*[:=]?\s*([0-9]{1,4}/[0-9]{4})\b', q_lower)
     if cno_match:
         return "get_case_by_crimeno", {"crime_no": cno_match.group(3)}
 
-    # 2. Accused search by name
     name_match = re.search(r'\b(accused|suspect|person|named|name)\s+([a-zA-Z]+)', q_lower)
     if name_match:
         name = name_match.group(2)
@@ -263,13 +286,11 @@ def resolve_query_intent(query):
             dist = "Mangaluru City"
         return "search_accused_by_name", {"name": name, "district_name": dist}
 
-    # If query mentions a specific name directly
     words = [w.capitalize() for w in query.split() if len(w) > 3 and w.lower() not in ["find", "show", "get", "case", "cases", "named", "with", "from", "district", "accused", "suspect"]]
     if words:
         dist = "Bengaluru City" if ("bengaluru" in q_lower or "bangalore" in q_lower) else None
         return "search_accused_by_name", {"name": words[0], "district_name": dist}
 
-    # 3. District search
     if "district" in q_lower or "bengaluru" in q_lower or "mysuru" in q_lower or "hubballi" in q_lower:
         dist_name = "Bengaluru City"
         if "mysuru" in q_lower:
@@ -278,7 +299,6 @@ def resolve_query_intent(query):
             dist_name = "Hubballi Dharwad City"
         return "get_cases_by_district", {"district_name": dist_name}
 
-    # Default to district query
     return "get_cases_by_district", {"district_name": "Bengaluru City"}
 
 
@@ -400,6 +420,8 @@ def handler(arg1, arg2):
     query = ""
     conversation_id = ""
     turn_id = 1
+    explicit_intent = None
+    explicit_params = None
 
     # Extract JSON body
     if hasattr(req, 'get_json') and callable(getattr(req, 'get_json')):
@@ -409,10 +431,14 @@ def handler(arg1, arg2):
                 query = body.get("query") or ""
                 conversation_id = body.get("conversation_id") or ""
                 turn_id = body.get("turn_id") or 1
+                # NEW: read intent/parameters directly - this is what
+                # Conversational_engine's call_backend_intent() actually sends.
+                explicit_intent = body.get("intent")
+                explicit_params = body.get("parameters")
         except Exception:
             pass
 
-    if not query and hasattr(req, 'get_argument') and callable(getattr(req, 'get_argument')):
+    if not query and explicit_intent is None and hasattr(req, 'get_argument') and callable(getattr(req, 'get_argument')):
         try:
             query = req.get_argument("query") or ""
             conversation_id = req.get_argument("conversation_id") or ""
@@ -420,7 +446,7 @@ def handler(arg1, arg2):
         except Exception:
             pass
 
-    if not query and hasattr(req, 'get_request_body') and callable(getattr(req, 'get_request_body')):
+    if not query and explicit_intent is None and hasattr(req, 'get_request_body') and callable(getattr(req, 'get_request_body')):
         try:
             raw = req.get_request_body()
             if raw:
@@ -428,6 +454,8 @@ def handler(arg1, arg2):
                 query = body.get("query") or ""
                 conversation_id = body.get("conversation_id") or ""
                 turn_id = body.get("turn_id") or 1
+                explicit_intent = body.get("intent")
+                explicit_params = body.get("parameters")
         except Exception:
             pass
 
@@ -435,12 +463,17 @@ def handler(arg1, arg2):
         app = zcatalyst_sdk.initialize()
         zcql = app.zcql()
 
-        intent, params = resolve_query_intent(query)
+        # NEW: prefer the explicit intent/parameters sent by the caller
+        # (Conversational_engine) over re-deriving intent from free text.
+        if explicit_intent:
+            intent = explicit_intent
+            params = explicit_params or {}
+        else:
+            intent, params = resolve_query_intent(query)
 
         if intent in LIVE_INTENTS:
             if intent == "search_accused_by_name":
                 res_data = h_search_accused_by_name(zcql, params)
-                # Disambiguation / candidate check scoped ONLY to search_accused_by_name
                 if res_data and len(res_data.get("results", [])) > 1:
                     res_data["clarification_needed"] = True
             elif intent == "get_cases_by_gravity":
