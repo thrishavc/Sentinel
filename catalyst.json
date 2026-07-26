@@ -3,7 +3,8 @@
     "source": "backend",
     "targets": [
       "crime_query_resolver",
-      "seed_data"
+      "seed_data",
+      "Conversational_engine"
     ]
   }
 }
