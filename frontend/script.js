@@ -115,12 +115,16 @@ const SUGGESTED_CHIPS = {
         en: [
             "Show all FIRs in Whitefield district",
             "District-wide burglary case count summary 2024",
-            "Overall chargesheet filing rate across stations"
+            "Overall chargesheet filing rate across stations",
+            "Show repeat offenders across districts",
+            "Analyze accused co-conspirator network"
         ],
         kn: [
             "ವೈಟ್‌ಫೀಲ್ಡ್ ವಿಭಾಗದ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ",
             "ಜಿಲ್ಲಾವಾರು ಕಳವು ಪ್ರಕರಣಗಳ ಒಟ್ಟು ಸಂಖ್ಯೆ ಸಾರಾಂಶ 2024",
-            "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ"
+            "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ",
+            "ವಿವಿಧ ಜಿಲ್ಲೆಗಳಲ್ಲಿ ಮರುಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ",
+            "ಆರೋಪಿಗಳ ಸಹಚರ ಜಾಲ ವಿಶ್ಲೇಷಿಸಿ"
         ]
     }
 };
@@ -141,10 +145,14 @@ const SUGGESTED_CHIP_INTENTS = {
     "Show all FIRs in Whitefield district": { intent: "get_cases_by_district", parameters: { district_name: "Whitefield" } },
     "District-wide burglary case count summary 2024": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } },
     "Overall chargesheet filing rate across stations": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } },
+    "Show repeat offenders across districts": { intent: "get_repeat_offenders", parameters: {} },
+    "Analyze accused co-conspirator network": { intent: "get_accused_network", parameters: { accused_master_id: 1 } },
     // Supervisor — KN
     "ವೈಟ್‌ಫೀಲ್ಡ್ ವಿಭಾಗದ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_district", parameters: { district_name: "Whitefield" } },
     "ಜಿಲ್ಲಾವಾರು ಕಳವು ಪ್ರಕರಣಗಳ ಒಟ್ಟು ಸಂಖ್ಯೆ ಸಾರಾಂಶ 2024": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } },
-    "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } }
+    "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } },
+    "ವಿವಿಧ ಜಿಲ್ಲೆಗಳಲ್ಲಿ ಮರುಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_repeat_offenders", parameters: {} },
+    "ಆರೋಪಿಗಳ ಸಹಚರ ಜಾಲ ವಿಶ್ಲೇಷಿಸಿ": { intent: "get_accused_network", parameters: { accused_master_id: 1 } }
 };
 
 const KARNATAKA_DISTRICTS = [
@@ -274,6 +282,11 @@ function resolveIntent(queryText) {
  * @returns {Promise<Object>} Parsed response object
  */
 async function callBackend(intent, parameters = {}) {
+    // Client-side guard: restrict pattern analysis intents to Supervisor role only
+    if ((intent === "get_repeat_offenders" || intent === "get_accused_network") && window.currentUserRole !== "Supervisor") {
+        throw new Error("This feature requires Supervisor access.");
+    }
+
     const payload = {
         intent,
         parameters,
@@ -826,27 +839,54 @@ function renderErrorState(errorMessage, queryText) {
 // 5. ROLE & LANGUAGE ACCESS CONTROLS
 // ==========================================================================
 
-function toggleRole() {
-    currentRole = (currentRole === 'investigator') ? 'supervisor' : 'investigator';
-    document.body.classList.remove('role-investigator', 'role-supervisor');
-    document.body.classList.add(`role-${currentRole}`);
+function applyRoleToUI(role) {
+    if (!role) return;
+    const mappedRole = (role === "App Administrator" || role === "Supervisor") ? "Supervisor" : "Investigator";
+    window.currentUserRole = mappedRole;
+    const isSupervisor = (mappedRole === "Supervisor");
 
+    // Update body class dynamically
+    document.body.classList.remove('role-investigator', 'role-supervisor', 'role-admin');
+    document.body.classList.add(isSupervisor ? 'role-supervisor' : 'role-investigator');
+
+    // Update role badge UI with distinct icon and text
     const badgeText = document.getElementById('role-badge-text');
     if (badgeText) {
-        if (currentRole === 'investigator') {
-            badgeText.className = 'role-badge investigator-badge';
-            badgeText.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span data-i18n="roleInvestigator">${TRANSLATIONS[currentLang].roleInvestigator}</span>
-            `;
-        } else {
+        if (isSupervisor) {
             badgeText.className = 'role-badge supervisor-badge';
             badgeText.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12"/></svg>
-                <span data-i18n="roleSupervisor">${TRANSLATIONS[currentLang].roleSupervisor}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>Supervisor</span>
+            `;
+        } else {
+            badgeText.className = 'role-badge investigator-badge';
+            badgeText.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Investigator</span>
             `;
         }
     }
+
+    const roleToggleBtn = document.getElementById('role-toggle-btn');
+    if (roleToggleBtn) {
+        roleToggleBtn.style.cursor = 'default';
+        roleToggleBtn.style.pointerEvents = 'none';
+        roleToggleBtn.setAttribute('title', `Assigned Role: ${mappedRole}`);
+    }
+
+    // Gate Export as PDF button to Supervisor only
+    const exportBtn = document.getElementById('btn-export-pdf');
+    if (exportBtn) {
+        exportBtn.style.display = isSupervisor ? '' : 'none';
+    }
+
     renderSuggestedChips();
 }
 
@@ -887,10 +927,23 @@ function renderSuggestedChips() {
     const container = document.getElementById('suggested-chips');
     if (!container) return;
 
-    const chipList = SUGGESTED_CHIPS[currentRole][currentLang];
+    const isSupervisor = (window.currentUserRole === "Supervisor");
+    const roleKey = isSupervisor ? 'supervisor' : 'investigator';
+    const chipList = SUGGESTED_CHIPS[roleKey][currentLang] || [];
+
+    // Filter out chips tied to restricted pattern analysis intents if not Supervisor
+    const filteredChips = chipList.filter(text => {
+        const intentConfig = SUGGESTED_CHIP_INTENTS[text];
+        if (!intentConfig) return true;
+        if (!isSupervisor && (intentConfig.intent === "get_repeat_offenders" || intentConfig.intent === "get_accused_network")) {
+            return false;
+        }
+        return true;
+    });
+
     container.innerHTML = '';
 
-    chipList.forEach(text => {
+    filteredChips.forEach(text => {
         const chip = document.createElement('button');
         chip.type = 'button';
         chip.className = 'suggested-chip';
@@ -1011,7 +1064,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initEventListeners() {
     document.getElementById('lang-toggle-btn')?.addEventListener('click', toggleLanguage);
-    document.getElementById('role-toggle-btn')?.addEventListener('click', toggleRole);
 
     document.getElementById('btn-state-1')?.addEventListener('click', () => switchState(1));
     document.getElementById('btn-state-2')?.addEventListener('click', () => switchState(2));
