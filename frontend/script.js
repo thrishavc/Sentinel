@@ -8,6 +8,118 @@
  * ==========================================================================
  */
 
+// Toggle for Hackathon Fallback Demo Mode (No backend required)
+const USE_MOCK_MODE = true;
+
+/**
+ * Mock backend response generator for fallback demo mode.
+ */
+function getMockBackendResponse(userQuery) {
+    const lower = (userQuery || "").toLowerCase();
+    
+    // Default / fallback mock case record (Manjunath Kumar - Whitefield Burglary)
+    let mockRecord = {
+        crime_no: "10100010001202600042",
+        district_name: "Bengaluru Urban",
+        unit_name: "Whitefield PS",
+        accused_name: "Manjunath Kumar",
+        accused_master_id: "ACC-89241",
+        crime_head: "Property Offence",
+        crime_subhead: "Night Burglary",
+        case_status: "Under Investigation",
+        acts: "IPC 1860 - Sec 380, 457",
+        arrest_date: "2026-03-14",
+        investigator: "Insp. Rajesh Gowda",
+        associates: ["Venkatesh N.", "Syed Irfan"],
+        evidence_summary: "CCTNS records: 4 matching FIRs, recovery of stolen silver items, cellular tower dump match at scene."
+    };
+
+    if (lower.includes("cyber") || lower.includes("skimming") || lower.includes("70412") || lower.includes("koramangala")) {
+        mockRecord = {
+            crime_no: "10100020001202600108",
+            district_name: "Bengaluru Urban",
+            unit_name: "Koramangala Cyber PS",
+            accused_name: "Syed Irfan",
+            accused_master_id: "ACC-70412",
+            crime_head: "Cyber Crime",
+            crime_subhead: "ATM Skimming & Fraud",
+            case_status: "Under Trial",
+            acts: "IT Act 2000 Sec 66D, IPC Sec 420",
+            arrest_date: "2026-01-20",
+            investigator: "Insp. Anitha Rao",
+            associates: ["Manjunath Kumar", "Ramesh Babu"],
+            evidence_summary: "ATM camera surveillance footage, spoofed card clone devices seized from residence."
+        };
+    } else if (lower.includes("davanagere") || lower.includes("dacoity") || lower.includes("highway") || lower.includes("55190")) {
+        mockRecord = {
+            crime_no: "10100050001202600019",
+            district_name: "Davanagere",
+            unit_name: "Vidyanagar PS",
+            accused_name: "Venkatesh N.",
+            accused_master_id: "ACC-55190",
+            crime_head: "Violent Crime",
+            crime_subhead: "Highway Dacoity",
+            case_status: "Chargesheeted",
+            acts: "IPC 1860 - Sec 395, 397",
+            arrest_date: "2025-11-05",
+            investigator: "DySP Suresh Patil",
+            associates: ["Kiran Naik", "Prakash M."],
+            evidence_summary: "NH-48 toll plaza camera identification, weapon recovery report, co-accused confession."
+        };
+    } else if (lower.includes("heinous") || lower.includes("murder") || lower.includes("ghora") || lower.includes("ಘೋರ")) {
+        mockRecord = {
+            crime_no: "10100030001202600005",
+            district_name: "Mysuru",
+            unit_name: "Devaraja PS",
+            accused_name: "Prakash M.",
+            accused_master_id: "ACC-33104",
+            crime_head: "Heinous Crime",
+            crime_subhead: "Armed Robbery & Homicide",
+            case_status: "Under Investigation",
+            acts: "IPC 1860 - Sec 302, 392, Arms Act Sec 25",
+            arrest_date: "2026-02-28",
+            investigator: "Insp. Mahesh Kumar",
+            associates: ["Venkatesh N."],
+            evidence_summary: "Forensic DNA match on weapon, ballistics report, eyewitness statement recorded u/s 164 CrPC."
+        };
+    } else if (lower.includes("district") || lower.includes("where") || lower.includes("which") || lower.includes("location") || lower.includes("ಯಾವ") || lower.includes("ಜಿಲ್ಲೆ")) {
+        mockRecord.evidence_summary = "District query filter applied across Karnataka CCTNS jurisdiction tables.";
+    }
+
+    const nlgEn = `Intelligence match found for query "${userQuery}": Accused ${mockRecord.accused_name} (${mockRecord.accused_master_id}) linked to Case #${mockRecord.crime_no} under ${mockRecord.unit_name}, ${mockRecord.district_name}. Offence: ${mockRecord.crime_subhead} (${mockRecord.acts}). Current Status: ${mockRecord.case_status}. Key Associates: ${mockRecord.associates.join(", ")}.`;
+    const nlgKn = `ಪ್ರಶ್ನೆ "${userQuery}" ಗಾಗಿ ಅಪರಾಧ ವಿವರಗಳು ಸಿಕ್ಕಿವೆ: ಶಂಕಿತ ${mockRecord.accused_name} (${mockRecord.accused_master_id}) ಪ್ರಕರಣ #${mockRecord.crime_no} (${mockRecord.unit_name}, ${mockRecord.district_name}) ಯಲ್ಲಿ ನಮೂದಾಗಿದೆ. ಅಪರಾಧ: ${mockRecord.crime_subhead} (${mockRecord.acts}). ಪ್ರಸ್ತುತ ಸ್ಥಿತಿ: ${mockRecord.case_status}. ಮುಖ್ಯ ಸಹಚರರು: ${mockRecord.associates.join(", ")}.`;
+
+    return {
+        status: "success",
+        turn_id: turnId,
+        conversation_id: conversationId,
+        extracted_payload: {
+            nlg_output: currentLang === 'kn' ? nlgKn : nlgEn,
+            intent: "search_accused_by_name",
+            evidence: {
+                source_tables: ["t_accused_master", "t_fir_bilingual", "t_act_section", "t_arrest_memo"],
+                query_summary: `Executed CCTNS lookup for "${userQuery}". ${mockRecord.evidence_summary}`
+            },
+            results: [
+                {
+                    accused_name: mockRecord.accused_name,
+                    accused_master_id: mockRecord.accused_master_id,
+                    crime_no: mockRecord.crime_no,
+                    district_name: mockRecord.district_name,
+                    unit_name: mockRecord.unit_name,
+                    crime_head: mockRecord.crime_head,
+                    crime_subhead: mockRecord.crime_subhead,
+                    case_status: mockRecord.case_status,
+                    acts: mockRecord.acts,
+                    arrest_date: mockRecord.arrest_date,
+                    investigator: mockRecord.investigator,
+                    associates: mockRecord.associates.join(", ")
+                }
+            ]
+        }
+    };
+}
+
 // ==========================================================================
 // 1. LIVE BACKEND CONFIGURATION
 // ==========================================================================
@@ -347,27 +459,37 @@ function setLoadingOverlay(active) {
 }
 
 async function callBackend(userQuery) {
-  try {
-    console.log(`[CONVO ENGINE REQUEST] conversation_id: ${conversationId}, turn_id: ${turnId}, query: "${userQuery}"`);
-    const response = await fetch(CONVO_ENGINE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: userQuery,
-        conversation_id: conversationId,
-        turn_id: turnId
-      })
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
-    }
-    const data = await response.json();
+  if (USE_MOCK_MODE) {
+    console.log(`[MOCK ENGINE REQUEST] conversation_id: ${conversationId}, turn_id: ${turnId}, query: "${userQuery}"`);
+    const delay = Math.floor(Math.random() * 300) + 600; // 600-900ms delay
+    await new Promise(resolve => setTimeout(resolve, delay));
+    const data = getMockBackendResponse(userQuery);
     turnId += 1;
-    console.log(`[CONVO ENGINE RESPONSE] turn_id now ${turnId}:`, data);
+    console.log(`[MOCK ENGINE RESPONSE] turn_id now ${turnId}:`, data);
     return data;
-  } catch (err) {
-    console.error("Conversational engine error:", err);
-    throw err;
+  } else {
+    try {
+      console.log(`[CONVO ENGINE REQUEST] conversation_id: ${conversationId}, turn_id: ${turnId}, query: "${userQuery}"`);
+      const response = await fetch(CONVO_ENGINE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: userQuery,
+          conversation_id: conversationId,
+          turn_id: turnId
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      turnId += 1;
+      console.log(`[CONVO ENGINE RESPONSE] turn_id now ${turnId}:`, data);
+      return data;
+    } catch (err) {
+      console.error("Conversational engine error:", err);
+      throw err;
+    }
   }
 }
 
