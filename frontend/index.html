@@ -17,7 +17,7 @@
                     .then((response) => {
                         var rawRole = response && response.content && response.content.role_details && response.content.role_details.role_name;
                         console.log("RAW ROLE FROM CATALYST:", JSON.stringify(rawRole));
-                        var mappedRole = (rawRole && rawRole.trim().toLowerCase() === "app administrator") ? "Supervisor" : "Investigator";
+                        var mappedRole = (rawRole && rawRole.trim().toLowerCase() === "app administrator") ? "Inspector" : "Sub-Inspector";
                         console.log("MAPPED ROLE:", mappedRole);
                         window.currentUserRole = mappedRole;
                         if (typeof applyRoleToUI === 'function') {
@@ -53,7 +53,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="theme-dark lang-en role-investigator">
+<body class="theme-dark lang-en role-sub-inspector">
 
     <!-- Particle Network Animated Background -->
     <canvas id="bg-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1;"></canvas>
@@ -205,7 +205,7 @@
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                         </svg>
-                        <span data-i18n="roleInvestigator">Investigator</span>
+                        <span data-i18n="roleInvestigator">Sub-Inspector</span>
                     </span>
                 </div>
             </div>

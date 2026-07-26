@@ -21,8 +21,8 @@ const TRANSLATIONS = {
         appTitle: "SENTINEL",
         appSub: "KSP Crime Records Intelligence",
         roleLabel: "Role:",
-        roleInvestigator: "Investigator",
-        roleSupervisor: "Supervisor",
+        roleInvestigator: "Sub-Inspector",
+        roleSupervisor: "Inspector",
         newChat: "New Investigation",
         recentQueries: "Recent Queries",
         viewStateTitle: "UI State Preview",
@@ -55,8 +55,8 @@ const TRANSLATIONS = {
         appTitle: "ಸೆಂಟಿನೆಲ್",
         appSub: "ಕೆಎಸ್‍ಪಿ ಅಪರಾಧ ದಾಖಲೆಗಳ ಬುದ್ಧಿವಂತಿಕೆ",
         roleLabel: "ಪಾತ್ರ:",
-        roleInvestigator: "ತನಿಖಾಧಿಕಾರಿ",
-        roleSupervisor: "ಮೇಲ್ವಿಚಾರಕ",
+        roleInvestigator: "ಉಪನಿರೀಕ್ಷಕರು",
+        roleSupervisor: "ನಿರೀಕ್ಷಕರು",
         newChat: "ಹೊಸ ತನಿಖೆ",
         recentQueries: "ಇತ್ತೀಚಿನ ಪ್ರಶ್ನೆಗಳು",
         viewStateTitle: "ಯುಐ ಸ್ಥಿತಿ ಮುನ್ನೋಟ",
@@ -321,9 +321,11 @@ function resolveIntent(queryText) {
  * @returns {Promise<Object>} Parsed response object
  */
 async function callBackend(intent, parameters = {}) {
-    // Client-side guard: restrict pattern analysis intents to Supervisor role only
-    if ((intent === "get_repeat_offenders" || intent === "get_accused_network" || intent === "get_mo_matches") && window.currentUserRole !== "Supervisor") {
-        throw new Error("This feature requires Supervisor access.");
+    // Role gating check: restrict pattern analysis intents to Inspector level only
+    const currentRoleClean = (window.currentUserRole || "").trim().toLowerCase();
+    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor" || currentRoleClean === "app administrator");
+    if ((intent === "get_repeat_offenders" || intent === "get_accused_network" || intent === "get_mo_matches") && !isInspector) {
+        throw new Error("This feature requires Inspector-level access.");
     }
 
     const payload = {
@@ -972,15 +974,16 @@ function renderSuggestedChips() {
     const container = document.getElementById('suggested-chips');
     if (!container) return;
 
-    const isSupervisor = (window.currentUserRole === "Supervisor");
-    const roleKey = isSupervisor ? 'supervisor' : 'investigator';
+    const currentRoleClean = (window.currentUserRole || "").trim().toLowerCase();
+    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor" || currentRoleClean === "app administrator");
+    const roleKey = isInspector ? 'supervisor' : 'investigator';
     const chipList = SUGGESTED_CHIPS[roleKey][currentLang] || [];
 
-    // Filter out chips tied to restricted pattern analysis intents if not Supervisor
+    // Filter out chips tied to restricted pattern analysis intents if not Inspector
     const filteredChips = chipList.filter(text => {
         const intentConfig = SUGGESTED_CHIP_INTENTS[text];
         if (!intentConfig) return true;
-        if (!isSupervisor && (intentConfig.intent === "get_repeat_offenders" || intentConfig.intent === "get_accused_network")) {
+        if (!isInspector && (intentConfig.intent === "get_repeat_offenders" || intentConfig.intent === "get_accused_network" || intentConfig.intent === "get_mo_matches")) {
             return false;
         }
         return true;
