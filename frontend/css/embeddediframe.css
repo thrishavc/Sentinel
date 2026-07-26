@@ -1,45 +1,42 @@
 /* ==========================================================================
-   SENTINEL — CATALYST EMBEDDED IFRAME DARK THEME (NARROWLY SCOPED)
+   SENTINEL — ULTRA-CONSERVATIVE CATALYST EMBEDDED IFRAME DARK THEME
+   ==========================================================================
+   Strict Constraints Enforced:
+   - ONLY allowed properties: background-color, color, border, border-color,
+     border-radius, box-shadow, font-family, font-size, font-weight, padding,
+     caret-color, -webkit-box-shadow, -webkit-text-fill-color, transition.
+   - NO display, visibility, position, opacity, dimension, or overflow properties.
+   - NO !important flags.
+   - NO un-scoped generic div/* /span/section tag selectors.
    ========================================================================== */
 
-/* 1. Global Font & Colors for Body & Main Containers */
+/* 1. Body Background & Main Font */
 body {
-    background-color: #1E1E2A !important;
-    color: #E5E7EB !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    background-color: #1E1E2A;
+    color: #E5E7EB;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* 2. Specific Class Target Backgrounds & Text Colors */
-.za-login-container, 
-.zp-login-container, 
-.signup-container, 
-.signin-box, 
-.login-container, 
-.form-container,
-#main_container {
-    background-color: #1E1E2A !important;
-    color: #E5E7EB !important;
-}
-
-/* 3. Text Colors for Specific Labels & Titles */
+/* 2. Headings & Labels */
+h1, h2, h3, h4, 
+.title, 
+.signin_title, 
+label, 
 .field-label, 
 .textbox-label, 
-.title, 
-.field_label, 
-.signin_title,
-.label_head {
-    color: #E5E7EB !important;
+.field_label {
+    color: #E5E7EB;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* 3. Subtitles & Secondary Help Text */
 .sub-title, 
-.forgot-pass, 
 .help-text, 
-.secondary-text, 
-.forgot_password {
-    color: #9CA3AF !important;
+.secondary-text {
+    color: #9CA3AF;
 }
 
-/* 4. Input Field Dark Styling */
+/* 4. Input Fields (Dark background, light text, subtle border & amber focus state) */
 input[type="text"], 
 input[type="email"], 
 input[type="password"], 
@@ -48,13 +45,14 @@ select,
 textarea,
 .textbox,
 .field_input {
-    background-color: #2A2A38 !important;
-    color: #E5E7EB !important;
-    border: 1px solid #3F3F52 !important;
-    border-radius: 6px !important;
-    font-size: 0.95rem !important;
-    outline: none !important;
-    caret-color: #E5E7EB !important;
+    background-color: #2A2A38;
+    color: #E5E7EB;
+    border: 1px solid #3F3F52;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    caret-color: #E5E7EB;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input[type="text"]:focus, 
@@ -64,10 +62,10 @@ input[type="number"]:focus,
 select:focus, 
 textarea:focus,
 .textbox:focus {
-    background-color: #2A2A38 !important;
-    color: #E5E7EB !important;
-    border-color: #F59E0B !important;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
+    background-color: #2A2A38;
+    color: #E5E7EB;
+    border-color: #F59E0B;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
 }
 
 /* 5. Fix Webkit Autofill White Flash */
@@ -75,13 +73,13 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px #2A2A38 inset !important;
-    -webkit-text-fill-color: #E5E7EB !important;
-    border: 1px solid #F59E0B !important;
-    caret-color: #E5E7EB !important;
+    -webkit-box-shadow: 0 0 0 1000px #2A2A38 inset;
+    -webkit-text-fill-color: #E5E7EB;
+    border-color: #F59E0B;
+    caret-color: #E5E7EB;
 }
 
-/* 6. Primary Action Button Styling */
+/* 6. Primary Sign-In Buttons */
 button, 
 input[type="submit"], 
 input[type="button"], 
@@ -91,13 +89,15 @@ input[type="button"],
 .submit-btn, 
 .signin-btn, 
 .btn_signin {
-    background-color: #F59E0B !important;
-    color: #121214 !important;
-    border: none !important;
-    border-radius: 6px !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
-    cursor: pointer !important;
+    background-color: #F59E0B;
+    color: #121214;
+    border: 1px solid #F59E0B;
+    border-radius: 6px;
+    padding: 12px 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 0.2s ease;
 }
 
 button:hover, 
@@ -105,16 +105,20 @@ input[type="submit"]:hover,
 input[type="button"]:hover, 
 .btn-primary:hover, 
 .btn_signin:hover {
-    background-color: #D97706 !important;
-    color: #121214 !important;
+    background-color: #D97706;
+    border-color: #D97706;
+    color: #121214;
 }
 
-/* 7. Hyperlinks */
-a {
-    color: #F59E0B !important;
-    text-decoration: none !important;
+/* 7. Forgot Password & Action Links */
+a, 
+.forgot-pass, 
+.forgot_password {
+    color: #F59E0B;
 }
 
-a:hover {
-    text-decoration: underline !important;
+a:hover, 
+.forgot-pass:hover, 
+.forgot_password:hover {
+    color: #D97706;
 }
