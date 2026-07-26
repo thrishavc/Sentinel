@@ -2,289 +2,16 @@
  * ==========================================================================
  * SENTINEL — BILINGUAL KSP CRIME INVESTIGATOR INTERFACE (frontend/script.js)
  * Target: Karnataka State Police Datathon 2026
- * Description: Core logic handling State 1 & State 2, EN/Kannada translation,
- *              Investigator/Supervisor role access control, modal detail views,
- *              multiple suspect entity resolution, and backend API hooks.
+ * Description: Core logic handling State 1 & State 2, live Catalyst serverless
+ *              backend integration, EN/Kannada translation, Investigator/Supervisor
+ *              role access control, and modal detail views.
  * ==========================================================================
  */
 
 // ==========================================================================
-// 1. MOCK SUSPECTS DATASET (MULTIPLE ENTITIES FOR DEMO)
+// 1. LIVE BACKEND CONFIGURATION
 // ==========================================================================
-
-const MOCK_SUSPECTS = [
-    // --- SUSPECT 1: Manjunath @ "Blade" Kumar (ACC-89241) ---
-    {
-        id: "ACC-89241",
-        name: "Manjunath",
-        matchKeywords: ["manjunath", "blade", "whitefield", "acc-89241", "burglary", "ಮಂಜುನಾಥ್", "ಬ್ಲೇಡ್", "ವೈಟ್‌ಫೀಲ್ಡ್", "ಕಳವು"],
-        data: {
-            suspectId: "ACC-89241",
-            suspectName: "Manjunath @ 'Blade' Kumar",
-            queryTextEn: "Show all details and linked records for Suspect ACC-89241 in Whitefield burglary case",
-            queryTextKn: "ವೈಟ್‌ಫೀಲ್ಡ್ ಕಳವು ಪ್ರಕರಣದಲ್ಲಿ ಶಂಕಿತ ACC-89241 ರ ಎಲ್ಲಾ ವಿವರಗಳು ಮತ್ತು ಸಂಪರ್ಕಿತ ದಾಖಲೆಗಳನ್ನು ತೋರಿಸಿ",
-            directAnswerEn: `Suspect <strong>ACC-89241 (Manjunath @ "Blade" Kumar)</strong> is linked to 4 registered FIRs across Whitefield (Bengaluru) and Ramanagara districts. 3 cases have been chargesheeted while 1 remains under active investigation. Subject was last arrested on 14 Nov 2023 and has 6 known gang associates. 5 open night-burglary cases match his known Modus Operandi (MO: rear-window grill cutting with hydraulic shears).`,
-            directAnswerKn: `ಶಂಕಿತ <strong>ACC-89241 (ಮಂಜುನಾಥ್ @ "ಬ್ಲೇಡ್" ಕುಮಾರ್)</strong> ವೈಟ್‌ಫೀಲ್ಡ್ (ಬೆಂಗಳೂರು) ಮತ್ತು ರಾಮನಗರ ಜಿಲ್ಲೆಗಳಲ್ಲಿ 4 ನೋಂದಾಯಿತ ಎಫ್‌ಐಆರ್‌ಗಳಿಗೆ ಲಿಂಕ್ ಆಗಿದ್ದಾರೆ. 3 ಪ್ರಕರಣಗಳಲ್ಲಿ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಸಲಾಗಿದ್ದು, 1 ಪ್ರಕರಣ ಸಕ್ರಿಯ ತನಿಖೆಯಲ್ಲಿದೆ. ಇವರನ್ನು ಕೊನೆಯದಾಗಿ 14 ನವೆಂಬರ್ 2023 ರಂದು ಬಂಧಿಸಲಾಗಿತ್ತು ಮತ್ತು 6 ಗ್ಯಾಂಗ್ ಸಹಚರರಿದ್ದಾರೆ. 5 ಮುಕ್ತ ರಾತ್ರಿ ಕಳವು ಪ್ರಕರಣಗಳು ಇವರ ಪರಿಚಿತ ಎಂಒ (ಹೈಡ್ರಾಲಿಕ್ ಕತ್ತರಿಯಿಂದ ಹಿಂಭಾಗದ ಕಿಟಕಿ ಗ್ರಿಲ್ ಕತ್ತರಿಸುವುದು) ಗೆ ಹೋಲುತ್ತವೆ.`,
-            cardsDetail: {
-                "linked-cases": {
-                    icon: "📄",
-                    titleEn: "Linked Cases",
-                    titleKn: "ಸಂಪರ್ಕಿತ ಪ್ರಕರಣಗಳು",
-                    headersEn: ["FIR No.", "Station / District", "Sections", "Status"],
-                    headersKn: ["ಎಫ್‌ಐಆರ್ ಸಂಖ್ಯೆ", "ಠಾಣೆ / ಜಿಲ್ಲೆ", "ವಿಭಾಗಗಳು", "ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["FIR-2024-WF-089", "Whitefield (Bengaluru)", "IPC 380, 457", "Active Under Trial"],
-                        ["FIR-2023-WF-412", "Whitefield (Bengaluru)", "IPC 454, 380", "Chargesheeted"],
-                        ["FIR-2023-RM-104", "Ramanagara Town", "IPC 392, 457", "Chargesheeted"],
-                        ["FIR-2022-WF-188", "HAL (Bengaluru)", "IPC 380", "Chargesheeted"]
-                    ]
-                },
-                "chargesheet": {
-                    icon: "⚖️",
-                    titleEn: "Chargesheet Status",
-                    titleKn: "ಚಾರ್ಜ್‌ಶೀಟ್ ಸ್ಥಿತಿ",
-                    headersEn: ["CS Record No.", "Related FIR", "Court File Date", "Status"],
-                    headersKn: ["ಚಾರ್ಜ್‌ಶೀಟ್ ಸಂಖ್ಯೆ", "ಸಂಬಂಧಿತ ಎಫ್‌ಐಆರ್", "ನ್ಯಾಯಾಲಯ ಸಲ್ಲಿಕೆ ದಿನಾಂಕ", "ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["CS-2023-WF-0089", "FIR-2023-WF-412", "18 Dec 2023", "Filed in CMM Court"],
-                        ["CS-2023-RM-0042", "FIR-2023-RM-104", "04 Jan 2024", "Filed in Principal JMFC"],
-                        ["CS-2022-WF-0112", "FIR-2022-WF-188", "12 Nov 2022", "Disposed (Convicted)"],
-                        ["CS-PENDING-089", "FIR-2024-WF-089", "Pending", "Drafting in Progress"]
-                    ]
-                },
-                "arrests": {
-                    icon: "⛓️",
-                    titleEn: "Arrest History",
-                    titleKn: "ಬಂಧನ ಇತಿಹಾಸ",
-                    headersEn: ["Arrest ID", "Arrest Date", "Arresting Station", "Bail Status"],
-                    headersKn: ["ಬಂಧನ ಐಡಿ", "ಬಂಧಿಸಿದ ದಿನಾಂಕ", "ಬಂಧಿಸಿದ ಪೊಲೀಸ್ ಠಾಣೆ", "ಜಾಮೀನು ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["ARR-2023-991", "14 Nov 2023", "Whitefield PS", "Out on Bail (12 Feb 2024)"],
-                        ["ARR-2022-104", "02 May 2022", "Ramanagara Town PS", "Sentenced / Released"]
-                    ]
-                },
-                "network": {
-                    icon: "🕸️",
-                    titleEn: "Network View",
-                    titleKn: "ನೆಟ್‌ವರ್ಕ್ ನೋಟ",
-                    headersEn: ["Associate Name / ID", "Role / Alias", "Shared FIRs", "Current Status"],
-                    headersKn: ["ಸಹಚರರ ಹೆಸರು / ಐಡಿ", "ಪಾತ್ರ / ಅಡ್ಡಹೆಸರು", "ಹಂಚಿಕೊಂಡ ಎಫ್‌ಐಆರ್‌ಗಳು", "ಪ್ರಸ್ತುತ ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["Ramesh @ 'Gundu' (ACC-771)", "Co-Accused / Lock Picker", "2 Cases", "In Custody"],
-                        ["Suresh Kumar (ACC-902)", "Fence / Stolen Gold Receiver", "3 Cases", "Absconding"],
-                        ["Venkatesh K. (ACC-314)", "Driver / Getaway", "1 Case", "Out on Bail"],
-                        ["Anand M. (ACC-509)", "Informant", "1 Case", "Under Surveillance"],
-                        ["Kiran S. (ACC-612)", "Gangs Associate", "2 Cases", "Active Investigation"],
-                        ["Prakash B. (ACC-118)", "Receiver", "1 Case", "Wanted"]
-                    ]
-                },
-                "mo-matches": {
-                    icon: "🚨",
-                    titleEn: "MO Match Flags",
-                    titleKn: "ಎಂ.ಒ. ಪಂದ್ಯದ ಫ್ಲ್ಯಾಗ್‌ಗಳು",
-                    headersEn: ["Open Case FIR", "Incident Location", "MO Technique", "Match Score"],
-                    headersKn: ["ಮುಕ್ತ ಎಫ್‌ಐಆರ್", "ಘಟನೆ ಸ್ಥಳ", "ಎಂಒ ತಂತ್ರಜ್ಞಾನ", "ಪಂದ್ಯದ ಅಂಕ"],
-                    rows: [
-                        ["FIR-UN-2024-019", "Marathahalli Sub-division", "Rear Window Hydraulic Shear Cut", "94% Match"],
-                        ["FIR-UN-2024-044", "Kadugodi Colony", "Night Break-in / Hydraulic Shear", "91% Match"],
-                        ["FIR-UN-2024-082", "Mahadevapura Area", "Grill Cutting / CCTV Spray Cut", "88% Match"],
-                        ["FIR-UN-2023-511", "Bellandur Outer Ring Rd", "Rear Door Grill Pry", "86% Match"],
-                        ["FIR-UN-2023-602", "Varthur Main Rd", "Hydraulic Shear Cut", "85% Match"]
-                    ]
-                }
-            }
-        }
-    },
-
-    // --- SUSPECT 2: Syed @ "Skimmer" Ibrahim (ACC-70412) ---
-    {
-        id: "ACC-70412",
-        name: "Syed Ibrahim",
-        matchKeywords: ["syed", "ibrahim", "skimmer", "atm", "koramangala", "acc-70412", "cloning", "cyber", "ಸೈಯದ್", "ಇಬ್ರಾಹಿಂ", "ಸ್ಕಿಮ್ಮರ್", "ಎಟಿಎಂ", "ಕೋರಮಂಗಲ", "ಸೈಬರ್"],
-        data: {
-            suspectId: "ACC-70412",
-            suspectName: "Syed @ 'Skimmer' Ibrahim",
-            queryTextEn: "Show cyber crime and ATM skimming records for Suspect ACC-70412 in Koramangala",
-            queryTextKn: "ಕೋರಮಂಗಲದ ಸೈಬರ್ ಅಪರಾಧ ಮತ್ತು ಎಟಿಎಂ ಸ್ಕಿಮ್ಮಿಂಗ್ ಪ್ರಕರಣದಲ್ಲಿ ಶಂಕಿತ ACC-70412 ರ ವಿವರಗಳನ್ನು ತೋರಿಸಿ",
-            directAnswerEn: `Suspect <strong>ACC-70412 (Syed @ "Skimmer" Ibrahim)</strong> is linked to 6 registered cyber fraud FIRs across Koramangala, Indiranagar, and Jayanagar PS. 4 cases have been chargesheeted while 2 remain under investigation. Last arrested on 28 Aug 2023, subject manages 4 key associates specializing in POS terminal tampering and magnetic card cloning. 4 unsolved financial fraud cases match his specific skimming technique.`,
-            directAnswerKn: `ಶಂಕಿತ <strong>ACC-70412 (ಸೈಯದ್ @ "ಸ್ಕಿಮ್ಮರ್" ಇಬ್ರಾಹಿಂ)</strong> ಕೋರಮಂಗಲ, ಇಂದಿರಾನಗರ ಮತ್ತು ಜಯನಗರ ಠಾಣೆಗಳಲ್ಲಿ 6 ಸೈಬರ್ ವಂಚನೆ ಎಫ್‌ಐಆರ್‌ಗಳಿಗೆ ಲಿಂಕ್ ಆಗಿದ್ದಾರೆ. 4 ಪ್ರಕರಣಗಳಲ್ಲಿ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆಯಾಗಿದ್ದು 2 ಪ್ರಕರಣ ವಿಚಾರಣೆಯಲ್ಲಿದೆ. 28 ಆಗಸ್ಟ್ 2023 ರಂದು ಬಂಧಿಸಲಾಗಿತ್ತು. ಪಿಒಎಸ್ ಟರ್ಮಿನಲ್ ಟ್ಯಾಂಪರಿಂಗ್ ಮತ್ತು ಮ್ಯಾಗ್ನೆಟಿಕ್ ಕಾರ್ಡ್ ಕ್ಲೋನಿಂಗ್‌ನಲ್ಲಿ ಪರಿಣತಿ ಹೊಂದಿರುವ 4 ಪ್ರಮುಖ ಸಹಚರರಿದ್ದಾರೆ. 4 ಮುಕ್ತ ಸೈಬರ್ ವಂಚನೆ ಪ್ರಕರಣಗಳು ಇವರ ಎಂಒಗೆ ಹೋಲುತ್ತವೆ.`,
-            cardsDetail: {
-                "linked-cases": {
-                    icon: "📄",
-                    titleEn: "Linked Cases",
-                    titleKn: "ಸಂಪರ್ಕಿತ ಪ್ರಕರಣಗಳು",
-                    headersEn: ["FIR No.", "Station / District", "Sections", "Status"],
-                    headersKn: ["ಎಫ್‌ಐಆರ್ ಸಂಖ್ಯೆ", "ಠಾಣೆ / ಜಿಲ್ಲೆ", "ವಿಭಾಗಗಳು", "ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["FIR-2023-KM-301", "Koramangala Cyber PS", "IT Act 66D, IPC 420", "Chargesheeted"],
-                        ["FIR-2023-IND-114", "Indiranagar PS", "IT Act 66C, IPC 419", "Chargesheeted"],
-                        ["FIR-2023-JAY-092", "Jayanagar PS", "IPC 420, 120B", "Chargesheeted"],
-                        ["FIR-2024-KM-015", "Koramangala PS", "IT Act 66D", "Active Investigation"],
-                        ["FIR-2022-CEN-502", "Cyber Crime CEN PS", "IPC 420", "Chargesheeted"],
-                        ["FIR-2024-IND-041", "Indiranagar PS", "IT Act 66C", "Under Inquiry"]
-                    ]
-                },
-                "chargesheet": {
-                    icon: "⚖️",
-                    titleEn: "Chargesheet Status",
-                    titleKn: "ಚಾರ್ಜ್‌ಶೀಟ್ ಸ್ಥಿತಿ",
-                    headersEn: ["CS Record No.", "Related FIR", "Court File Date", "Status"],
-                    headersKn: ["ಚಾರ್ಜ್‌ಶೀಟ್ ಸಂಖ್ಯೆ", "ಸಂಬಂಧಿತ ಎಫ್‌ಐಆರ್", "ನ್ಯಾಯಾಲಯ ಸಲ್ಲಿಕೆ ದಿನಾಂಕ", "ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["CS-2023-KM-0044", "FIR-2023-KM-301", "15 Nov 2023", "Filed in ACMM Court"],
-                        ["CS-2023-IND-0012", "FIR-2023-IND-114", "02 Oct 2023", "Filed in ACMM Court"],
-                        ["CS-2023-JAY-0089", "FIR-2023-JAY-092", "20 Jan 2024", "Filed in Court No. 4"],
-                        ["CS-2022-CEN-0105", "FIR-2022-CEN-502", "11 Aug 2022", "Trial in Progress"],
-                        ["CS-PENDING-015", "FIR-2024-KM-015", "Pending", "FSL Report Awaited"],
-                        ["CS-PENDING-041", "FIR-2024-IND-041", "Pending", "Investigation Active"]
-                    ]
-                },
-                "arrests": {
-                    icon: "⛓️",
-                    titleEn: "Arrest History",
-                    titleKn: "ಬಂಧನ ಇತಿಹಾಸ",
-                    headersEn: ["Arrest ID", "Arrest Date", "Arresting Station", "Bail Status"],
-                    headersKn: ["ಬಂಧನ ಐಡಿ", "ಬಂಧಿಸಿದ ದಿನಾಂಕ", "ಬಂಧಿಸಿದ ಪೊಲೀಸ್ ಠಾಣೆ", "ಜಾಮೀನು ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["ARR-2023-412", "28 Aug 2023", "Koramangala Cyber PS", "Judicial Custody / Bail Applied"],
-                        ["ARR-2022-098", "14 Feb 2022", "CEN Cyber PS", "Out on Conditional Bail"],
-                        ["ARR-2020-511", "09 Nov 2020", "Indiranagar PS", "Acquitted on Benefit of Doubt"]
-                    ]
-                },
-                "network": {
-                    icon: "🕸️",
-                    titleEn: "Network View",
-                    titleKn: "ನೆಟ್‌ವರ್ಕ್ ನೋಟ",
-                    headersEn: ["Associate Name / ID", "Role / Alias", "Shared FIRs", "Current Status"],
-                    headersKn: ["ಸಹಚರರ ಹೆಸರು / ಐಡಿ", "ಪಾತ್ರ / ಅಡ್ಡಹೆಸರು", "ಹಂಚಿಕೊಂಡ ಎಫ್‌ಐಆರ್‌ಗಳು", "ಪ್ರಸ್ತುತ ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["Imran Khan (ACC-812)", "ATM Micro-Cam Installer", "3 Cases", "In Custody"],
-                        ["Vikram Sharma (ACC-640)", "MSR Card Reader Supplier", "2 Cases", "Absconding"],
-                        ["Farooq @ 'Techie' (ACC-991)", "Decoder & Dump Writer", "4 Cases", "Wanted"],
-                        ["Nitin M. (ACC-204)", "Mule Account Handler", "1 Case", "Out on Bail"]
-                    ]
-                },
-                "mo-matches": {
-                    icon: "🚨",
-                    titleEn: "MO Match Flags",
-                    titleKn: "ಎಂ.ಒ. ಪಂದ್ಯದ ಫ್ಲ್ಯಾಗ್‌ಗಳು",
-                    headersEn: ["Open Case FIR", "Incident Location", "MO Technique", "Match Score"],
-                    headersKn: ["ಮುಕ್ತ ಎಫ್‌ಐಆರ್", "ಘಟನೆ ಸ್ಥಳ", "ಎಂಒ ತಂತ್ರಜ್ಞಾನ", "ಪಂದ್ಯದ ಅಂಕ"],
-                    rows: [
-                        ["FIR-UN-2024-311", "HSR Layout Sector 1 ATM", "Overlaid Skimmer & Pinhole Cam", "96% Match"],
-                        ["FIR-UN-2024-388", "BTM 2nd Stage ATM Kiosk", "Deep Insert Skimmer Device", "92% Match"],
-                        ["FIR-UN-2024-405", "Old Airport Road ATM", "Bluetooth POS Skimmer Overlay", "89% Match"],
-                        ["FIR-UN-2023-890", "Koramangala 8th Block", "ATM Keypad Overlay Sniffer", "87% Match"]
-                    ]
-                }
-            }
-        }
-    },
-
-    // --- SUSPECT 3: Venkatesh @ "Chaddi Gang" Gowda (ACC-55190) ---
-    {
-        id: "ACC-55190",
-        name: "Venkatesh Gowda",
-        matchKeywords: ["venkatesh", "gowda", "chaddi", "highway", "davanagere", "acc-55190", "dacoity", "chitradurga", "ವೆಂಕಟೇಶ್", "ಗೌಡ", "ಚಡ್ಡಿ", "ಹೆದ್ದಾರಿ", "ದಾವಣಗೆರೆ", "ದರೋಡೆ", "ಚಿತ್ರದುರ್ಗ"],
-        data: {
-            suspectId: "ACC-55190",
-            suspectName: "Venkatesh @ 'Chaddi Gang' Gowda",
-            queryTextEn: "Show highway robbery and armed dacoity cases for Suspect ACC-55190 in Davanagere",
-            queryTextKn: "ದಾವಣಗೆರೆಯಲ್ಲಿ ಹೆದ್ದಾರಿ ದರೋಡೆ ಮತ್ತು ಸಶಸ್ತ್ರ ದರೋಡೆ ಪ್ರಕರಣದಲ್ಲಿ ಶಂಕಿತ ACC-55190 ರ ವಿವರಗಳನ್ನು ತೋರಿಸಿ",
-            directAnswerEn: `Suspect <strong>ACC-55190 (Venkatesh @ "Chaddi Gang" Gowda)</strong> is linked to 8 registered violent dacoity FIRs across Davanagere, Chitradurga, and Tumakuru highways. 5 cases are chargesheeted while 3 remain under trial. Last arrested on 19 Feb 2024. Subject leads an armed 9-member inter-district highway gang. 6 unsolved night highway interception cases match his gang's violent Modus Operandi.`,
-            directAnswerKn: `ಶಂಕಿತ <strong>ACC-55190 (ವೆಂಕಟೇಶ್ @ "ಚಡ್ಡಿ ಗ್ಯಾಂಗ್" ಗೌಡ)</strong> ದಾವಣಗೆರೆ, ಚಿತ್ರದುರ್ಗ ಮತ್ತು ತುಮಕೂರು ಹೆದ್ದಾರಿಗಳಲ್ಲಿ 8 ಎಫ್‌ಐಆರ್‌ಗಳಿಗೆ ಲಿಂಕ್ ಆಗಿದ್ದಾರೆ. 5 ಪ್ರಕರಣಗಳಲ್ಲಿ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆಯಾಗಿದ್ದು 3 ಬಾಕಿ ಉಳಿದಿವೆ. 19 ಫೆಬ್ರವರಿ 2024 ರಂದು ಬಂಧಿಸಲಾಗಿದೆ. ಇವರು 9 ಸಶಸ್ತ್ರ ಹೆದ್ದಾರಿ ಗ್ಯಾಂಗ್ ಸಹಚರರನ್ನು ಮುನ್ನಡೆಸುತ್ತಾರೆ. 6 ಮುಕ್ತ ಹೆದ್ದಾರಿ ದರೋಡೆ ಪ್ರಕರಣಗಳು ಇವರ ಎಂಒಗೆ ಹೋಲುತ್ತವೆ.`,
-            cardsDetail: {
-                "linked-cases": {
-                    icon: "📄",
-                    titleEn: "Linked Cases",
-                    titleKn: "ಸಂಪರ್ಕಿತ ಪ್ರಕರಣಗಳು",
-                    headersEn: ["FIR No.", "Station / District", "Sections", "Status"],
-                    headersKn: ["ಎಫ್‌ಐಆರ್ ಸಂಖ್ಯೆ", "ಠಾಣೆ / ಜಿಲ್ಲೆ", "ವಿಭಾಗಗಳು", "ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["FIR-2024-DVG-012", "Davanagere Rural PS", "IPC 395, 397 (Dacoity)", "Active Under Trial"],
-                        ["FIR-2023-CTA-504", "Chitradurga Highway PS", "IPC 394, 341", "Chargesheeted"],
-                        ["FIR-2023-TUM-211", "Kyatsandra PS (Tumakuru)", "IPC 395", "Chargesheeted"],
-                        ["FIR-2022-DVG-880", "Harihar PS", "IPC 392, 506", "Chargesheeted"],
-                        ["FIR-2022-CTA-112", "Hiriyur Rural PS", "IPC 395", "Chargesheeted"],
-                        ["FIR-2021-TUM-901", "Sira PS", "IPC 394", "Chargesheeted"],
-                        ["FIR-2024-DVG-099", "Davanagere Town PS", "IPC 397", "Investigation Active"],
-                        ["FIR-2024-CTA-042", "Chitradurga Town PS", "IPC 395", "Under Inquiry"]
-                    ]
-                },
-                "chargesheet": {
-                    icon: "⚖️",
-                    titleEn: "Chargesheet Status",
-                    titleKn: "ಚಾರ್ಜ್‌ಶೀಟ್ ಸ್ಥಿತಿ",
-                    headersEn: ["CS Record No.", "Related FIR", "Court File Date", "Status"],
-                    headersKn: ["ಚಾರ್ಜ್‌ಶೀಟ್ ಸಂಖ್ಯೆ", "ಸಂಬಂಧಿತ ಎಫ್‌ಐಆರ್", "ನ್ಯಾಯಾಲಯ ಸಲ್ಲಿಕೆ ದಿನಾಂಕ", "ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["CS-2023-CTA-0112", "FIR-2023-CTA-504", "10 Dec 2023", "Filed in Sessions Court"],
-                        ["CS-2023-TUM-0098", "FIR-2023-TUM-211", "04 Nov 2023", "Filed in District Court"],
-                        ["CS-2022-DVG-0412", "FIR-2022-DVG-880", "19 Aug 2022", "Trial Ongoing"],
-                        ["CS-2022-CTA-0055", "FIR-2022-CTA-112", "30 May 2022", "Filed in Sessions Court"],
-                        ["CS-2021-TUM-0311", "FIR-2021-TUM-901", "14 Feb 2022", "Disposed (Convicted)"],
-                        ["CS-PENDING-012", "FIR-2024-DVG-012", "Pending", "Ballistic & DNA Report"],
-                        ["CS-PENDING-099", "FIR-2024-DVG-099", "Pending", "Absconding Co-accused"],
-                        ["CS-PENDING-042", "FIR-2024-CTA-042", "Pending", "Drafting Phase"]
-                    ]
-                },
-                "arrests": {
-                    icon: "⛓️",
-                    titleEn: "Arrest History",
-                    titleKn: "ಬಂಧನ ಇತಿಹಾಸ",
-                    headersEn: ["Arrest ID", "Arrest Date", "Arresting Station", "Bail Status"],
-                    headersKn: ["ಬಂಧನ ಐಡಿ", "ಬಂಧಿಸಿದ ದಿನಾಂಕ", "ಬಂಧಿಸಿದ ಪೊಲೀಸ್ ಠಾಣೆ", "ಜಾಮೀನು ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["ARR-2024-088", "19 Feb 2024", "Davanagere Rural PS", "Central Jail Bellary (No Bail)"],
-                        ["ARR-2022-901", "04 Jun 2022", "Chitradurga PS", "Bail Rejected"],
-                        ["ARR-2020-114", "11 Jan 2020", "Sira PS", "Released after 2 Years"],
-                        ["ARR-2018-005", "22 Jul 2018", "Harihar PS", "Sentence Completed"]
-                    ]
-                },
-                "network": {
-                    icon: "🕸️",
-                    titleEn: "Network View",
-                    titleKn: "ನೆಟ್‌ವರ್ಕ್ ನೋಟ",
-                    headersEn: ["Associate Name / ID", "Role / Alias", "Shared FIRs", "Current Status"],
-                    headersKn: ["ಸಹಚರರ ಹೆಸರು / ಐಡಿ", "ಪಾತ್ರ / ಅಡ್ಡಹೆಸರು", "ಹಂಚಿಕೊಂಡ ಎಫ್‌ಐಆರ್‌ಗಳು", "ಪ್ರಸ್ತುತ ಸ್ಥಿತಿ"],
-                    rows: [
-                        ["Basavaraj @ 'Kulla' (ACC-102)", "Second-in-Command / Weapons", "5 Cases", "Central Jail Bellary"],
-                        ["Thimmayya (ACC-449)", "Scout & Vehicle Tracker", "4 Cases", "In Custody"],
-                        ["Manja @ 'Iron Pipe' (ACC-311)", "Enforcer / Assault", "6 Cases", "Absconding"],
-                        ["Nagaraj (ACC-882)", "Stolen Truck Converter", "2 Cases", "Wanted"],
-                        ["Shivanna (ACC-501)", "Informant / Dhaba Tipster", "3 Cases", "Under Surveillance"],
-                        ["Rudrappa (ACC-774)", "Jewelry Fence", "4 Cases", "In Custody"],
-                        ["Eshwar (ACC-220)", "Driver", "2 Cases", "Out on Bail"],
-                        ["Kenchappa (ACC-990)", "Hideout Provider", "1 Case", "In Custody"],
-                        ["Kumar (ACC-119)", "Gangs Associate", "3 Cases", "Wanted"]
-                    ]
-                },
-                "mo-matches": {
-                    icon: "🚨",
-                    titleEn: "MO Match Flags",
-                    titleKn: "ಎಂ.ಒ. ಪಂದ್ಯದ ಫ್ಲ್ಯಾಗ್‌ಗಳು",
-                    headersEn: ["Open Case FIR", "Incident Location", "MO Technique", "Match Score"],
-                    headersKn: ["ಮುಕ್ತ ಎಫ್‌ಐಆರ್", "ಘಟನೆ ಸ್ಥಳ", "ಎಂಒ ತಂತ್ರಜ್ಞಾನ", "ಪಂದ್ಯದ ಅಂಕ"],
-                    rows: [
-                        ["FIR-UN-2024-901", "NH-48 Chitradurga Bypass", "Spike Strip Vehicle Interception", "97% Match"],
-                        ["FIR-UN-2024-944", "Davanagere Ring Road", "Iron Rod Assault & Cash Loot", "95% Match"],
-                        ["FIR-UN-2024-980", "Hiriyur Toll Junction", "False Barrier Night Robbery", "92% Match"],
-                        ["FIR-UN-2023-712", "Sira-Madhugiri Road", "Truck Driver Binding & Hijack", "89% Match"],
-                        ["FIR-UN-2023-801", "Challakere Highway", "Oil Spray on Windshield Loot", "86% Match"],
-                        ["FIR-UN-2023-889", "Holalkere Bypass", "Armed Gang Interception", "84% Match"]
-                    ]
-                }
-            }
-        }
-    }
-];
-
-// Backwards compatibility alias for code referencing global MOCK_DATA
-const MOCK_DATA = MOCK_SUSPECTS[0].data;
-
-// Global reference for currently displayed suspect entity
-window.ACTIVE_ENTITY_DATA = MOCK_SUSPECTS[0].data;
-
+const BACKEND_URL = "https://ksp-60079603520.development.catalystserverless.in/server/crime_query_resolver/execute";
 
 // ==========================================================================
 // 2. BILINGUAL TRANSLATION DICTIONARY
@@ -313,16 +40,12 @@ const TRANSLATIONS = {
         confidenceBadge: "High Confidence Match (98.4%)",
         keyMetricsHeader: "Investigative Indicators",
         cardsHint: "Click any card to inspect detailed record logs",
-
         graphHeading: "Associate & Case Relationship Graph",
         graphPlaceholderTag: "Ready for D3 / vis-network",
         graphNote: "Container <code>#network-graph</code> initialized. Ready for D3.js or vis-network instance.",
-
         reasoningTitle: "Show reasoning and sources",
         reasoningMeta: "4 CCTNS Tables • SQL Executed",
         closeBtn: "Close Window",
-
-        // Sidebar History Items
         hist1Title: "Suspect #89241 Whitefield burglary",
         hist2Title: "Suspect #70412 Cyber skimming Koramangala",
         hist3Title: "Suspect #55190 Highway dacoity Davanagere",
@@ -351,16 +74,12 @@ const TRANSLATIONS = {
         confidenceBadge: "ಹೆಚ್ಚಿನ ವಿಶ್ವಾಸಾರ್ಹತೆ ಪಂದ್ಯ (98.4%)",
         keyMetricsHeader: "ತನಿಖಾ ಸೂಚಕಗಳು",
         cardsHint: "ವಿವರವಾದ ದಾಖಲೆಗಳನ್ನು ಪರಿಶೀಲಿಸಲು ಯಾವುದೇ ಕಾರ್ಡ್ ಕ್ಲಿಕ್ ಮಾಡಿ",
-
         graphHeading: "ಸಹಚರ ಮತ್ತು ಪ್ರಕರಣ ಸಂಬಂಧಿತ ಗ್ರಾಫ್",
         graphPlaceholderTag: "D3 / vis-network ಗೆ ಸಿದ್ಧವಾಗಿದೆ",
-        graphNote: "ಕಂಟೇನರ್ <code>#network-graph</code> ಸಿದ್ಧವಾಗಿದೆ. D3.js ಅಥವಾ vis-network ನಮೂದಿಸಲು ಅನುಕೂಲಕರವಾಗಿದೆ.",
-
+        graphNote: "ಕಂಟೇನರ್ <code>#network-graph</code> ಸಿದ್ಧವಾಗಿದೆ.",
         reasoningTitle: "ಕಾರಣ ಮತ್ತು ಮೂಲಗಳನ್ನು ತೋರಿಸಿ",
         reasoningMeta: "4 CCTNS ಕೋಷ್ಟಕಗಳು • SQL ಜಾರಿಯಾಗಿದೆ",
         closeBtn: "ವಿಂಡೋ ಮುಚ್ಚಿ",
-
-        // Sidebar History Items
         hist1Title: "ಶಂಕಿತ #89241 ವೈಟ್‌ಫೀಲ್ಡ್ ಕಳವು",
         hist2Title: "ಶಂಕಿತ #70412 ಸೈಬರ್ ಸ್ಕಿಮ್ಮಿಂಗ್ ಕೋರಮಂಗಲ",
         hist3Title: "ಶಂಕಿತ #55190 ಹೆದ್ದಾರಿ ದರೋಡೆ ದಾವಣಗೆರೆ",
@@ -368,7 +87,6 @@ const TRANSLATIONS = {
     }
 };
 
-// Keys managed dynamically by renderState2WithData (avoid static translation overwrite)
 const DYNAMIC_I18N_KEYS = [
     'activeQueryText', 'directAnswerText',
     'card1Title', 'card1StatLabel', 'card1SubInfo',
@@ -378,7 +96,6 @@ const DYNAMIC_I18N_KEYS = [
     'card5Title', 'card5StatLabel', 'card5SubInfo'
 ];
 
-// Suggested Query Chips by Role and Language
 const SUGGESTED_CHIPS = {
     investigator: {
         en: [
@@ -408,209 +125,253 @@ const SUGGESTED_CHIPS = {
     }
 };
 
-// ==========================================================================
-// 3. APPLICATION STATE MANAGEMENT
-// ==========================================================================
-let currentLang = 'en'; // 'en' | 'kn'
-let currentRole = 'investigator'; // 'investigator' | 'supervisor'
-let currentState = 1; // 1 (Empty/Chat) | 2 (Resolved Entity)
+/** Fixed intent+parameter pairs for suggested chips (no text parsing). */
+const SUGGESTED_CHIP_INTENTS = {
+    // Investigator — EN
+    "Show all FIRs for suspect Manjunath ACC-89241": { intent: "search_accused_by_name", parameters: { name: "Manjunath" } },
+    "Show ATM skimming records for Syed Ibrahim ACC-70412": { intent: "search_accused_by_name", parameters: { name: "Syed Ibrahim" } },
+    "Show highway dacoity cases for Venkatesh Gowda ACC-55190": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Dacoity" } },
+    "Find suspects linked to MO burglary cases": { intent: "get_mo_matches", parameters: { crime_no: "104430006202600001" } },
+    // Investigator — KN
+    "ಶಂಕಿತ ಮಂಜುನಾಥ್ ACC-89241 ರ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ": { intent: "search_accused_by_name", parameters: { name: "Manjunath" } },
+    "ಸೈಯದ್ ಇಬ್ರಾಹಿಂ ACC-70412 ರ ಎಟಿಎಂ ಸ್ಕಿಮ್ಮಿಂಗ್ ದಾಖಲೆಗಳನ್ನು ತೋರಿಸಿ": { intent: "search_accused_by_name", parameters: { name: "Syed Ibrahim" } },
+    "ವೆಂಕಟೇಶ್ ಗೌಡ ACC-55190 ರ ಹೆದ್ದಾರಿ ದರೋಡೆ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Dacoity" } },
+    "ರಾತ್ರಿ ಕಳವು ಎಂಒ ಪ್ರಕರಣಗಳಿಗೆ ಲಿಂಕ್ ಆಗಿರುವ ಶಂಕಿತರನ್ನು ಹುಡುಕಿ": { intent: "get_mo_matches", parameters: { crime_no: "104430006202600001" } },
+    // Supervisor — EN
+    "Show all FIRs in Whitefield district": { intent: "get_cases_by_district", parameters: { district_name: "Whitefield" } },
+    "District-wide burglary case count summary 2024": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } },
+    "Overall chargesheet filing rate across stations": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } },
+    // Supervisor — KN
+    "ವೈಟ್‌ಫೀಲ್ಡ್ ವಿಭಾಗದ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_district", parameters: { district_name: "Whitefield" } },
+    "ಜಿಲ್ಲಾವಾರು ಕಳವು ಪ್ರಕರಣಗಳ ಒಟ್ಟು ಸಂಖ್ಯೆ ಸಾರಾಂಶ 2024": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } },
+    "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } }
+};
 
-// Initialize DOM on Load
-document.addEventListener('DOMContentLoaded', () => {
-    initEventListeners();
-    renderSuggestedChips();
-    updateTranslations();
-    renderState2WithData(MOCK_SUSPECTS[0].data);
-});
+const KARNATAKA_DISTRICTS = [
+    "Bagalkot", "Ballari", "Belagavi", "Bengaluru Rural", "Bengaluru Urban",
+    "Bidar", "Chamarajanagar", "Chikkaballapur", "Chikkamagaluru", "Chitradurga",
+    "Dakshina Kannada", "Davanagere", "Dharwad", "Gadag", "Hassan", "Haveri",
+    "Kalaburagi", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru", "Raichur",
+    "Ramanagara", "Shivamogga", "Tumakuru", "Udupi", "Uttara Kannada",
+    "Vijayapura", "Yadgir", "Whitefield", "Koramangala"
+];
 
-// Setup All Interactive Handlers
-function initEventListeners() {
-    // 1. Language Toggle Button
-    const langBtn = document.getElementById('lang-toggle-btn');
-    if (langBtn) {
-        langBtn.addEventListener('click', toggleLanguage);
-    }
+/** Which preview cards are relevant per intent (others are hidden). */
+const INTENT_VISIBLE_CARDS = {
+    get_case_by_crimeno: ["linked-cases", "chargesheet", "arrests", "network", "mo-matches"],
+    get_cases_by_district: ["linked-cases"],
+    get_cases_by_status: ["linked-cases", "chargesheet"],
+    get_case_victims: ["linked-cases"],
+    get_accused_by_case: ["linked-cases", "chargesheet", "arrests", "network"],
+    search_accused_by_name: ["linked-cases", "network", "arrests"],
+    get_accused_network: ["network"],
+    get_arrests_by_officer: ["arrests"],
+    get_cases_by_crimehead: ["linked-cases", "mo-matches"],
+    get_cases_by_act_section: ["linked-cases"],
+    get_repeat_offenders: ["linked-cases", "arrests", "network"],
+    get_cases_by_gravity: ["linked-cases"],
+    get_chargesheet_status: ["chargesheet"],
+    get_cases_by_court: ["linked-cases", "chargesheet"],
+    get_mo_matches: ["mo-matches", "linked-cases"]
+};
 
-    // 2. Role Toggle Button
-    const roleBtn = document.getElementById('role-toggle-btn');
-    if (roleBtn) {
-        roleBtn.addEventListener('click', toggleRole);
-    }
-
-    // 3. State Switcher Buttons (Sidebar testing toggles & New Chat)
-    document.getElementById('btn-state-1')?.addEventListener('click', () => switchState(1));
-    document.getElementById('btn-state-2')?.addEventListener('click', () => switchState(2));
-    document.getElementById('btn-new-chat')?.addEventListener('click', () => switchState(1));
-
-    // 4. Sidebar History Items click handler (.history-item and .recent-list__item)
-    const historyItems = document.querySelectorAll('.history-item, .recent-list__item');
-    historyItems.forEach((item, index) => {
-        item.addEventListener('click', () => {
-            historyItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-
-            const suspectId = item.getAttribute('data-suspect-id');
-            const titleEl = item.querySelector('.history-title') || item;
-            const queryText = titleEl.textContent.replace(/\s+/g, ' ').trim();
-
-            let suspect = null;
-
-            // 1. Match suspect by explicit data-suspect-id attribute
-            if (suspectId) {
-                suspect = MOCK_SUSPECTS.find(s => s.id === suspectId);
-            }
-
-            // 2. Fallback to fuzzy / text query matching
-            if (!suspect) {
-                suspect = findSuspectByQuery(queryText);
-            }
-
-            // 3. Fallback to array index
-            if (!suspect && MOCK_SUSPECTS[index]) {
-                suspect = MOCK_SUSPECTS[index];
-            }
-
-            // 4. Default fallback
-            if (!suspect) {
-                suspect = MOCK_SUSPECTS[0];
-            }
-
-            renderState2WithData(suspect.data, queryText);
-            showState(2);
-        });
-    });
-
-    // 5. Chat Form Submission (State 1 and State 2)
-    document.getElementById('chat-form-state1')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const queryVal = document.getElementById('chat-input-1').value.trim();
-        handleQuerySubmit(queryVal);
-    });
-
-    document.getElementById('chat-form-state2')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const queryVal = document.getElementById('chat-input-2').value.trim();
-        handleQuerySubmit(queryVal);
-    });
-
-    // 6. Preview Cards Click Event -> Open Modal
-    const previewCards = document.querySelectorAll('.preview-card');
-    previewCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const cardKey = card.dataset.card;
-            openDetailModal(cardKey);
-        });
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openDetailModal(card.dataset.card);
-            }
-        });
-    });
-
-    // 7. Modal Close Controls
-    document.getElementById('modal-close-btn')?.addEventListener('click', closeModal);
-    document.getElementById('modal-ok-btn')?.addEventListener('click', closeModal);
-    document.getElementById('detail-modal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'detail-modal') closeModal();
-    });
-
-    // 8. PDF Export Button
-    document.getElementById('btn-export-pdf')?.addEventListener('click', () => {
-        window.print();
-    });
-}
+// Application State Management Variables
+let currentLang = 'en';
+let currentRole = 'investigator';
+let currentState = 1;
+window.ACTIVE_ENTITY_DATA = null;
 
 // ==========================================================================
-// 4. FUZZY MATCHING & LEVENSHTEIN DISTANCE
+// 3. INTENT RESOLUTION & BACKEND CALLS
 // ==========================================================================
 
 /**
- * Calculates Levenshtein distance between two strings
+ * RESOLVE INTENT — PLACEHOLDER MATCHERS FOR DEMO
+ *
+ * NOTE: This keyword/regex matcher is a temporary client-side placeholder
+ * for Person B's real LLM-based intent classifier. It should be replaced
+ * with a live NLU/LLM classification API endpoint in production.
+ *
+ * @param {string} queryText
+ * @returns {{ intent: string, parameters: Object } | null}
  */
-function levenshteinDistance(a, b) {
-    const aLen = a.length;
-    const bLen = b.length;
-    if (aLen === 0) return bLen;
-    if (bLen === 0) return aLen;
+function resolveIntent(queryText) {
+    if (!queryText || !queryText.trim()) return null;
 
-    const row = Array(bLen + 1);
-    for (let i = 0; i <= bLen; i++) row[i] = i;
+    const text = queryText.trim();
 
-    for (let i = 1; i <= aLen; i++) {
-        let prev = i - 1;
-        row[0] = i;
-        for (let j = 1; j <= bLen; j++) {
-            const temp = row[j];
-            if (a[i - 1] === b[j - 1]) {
-                row[j] = prev;
-            } else {
-                row[j] = Math.min(prev + 1, Math.min(row[j] + 1, row[j - 1] + 1));
-            }
-            prev = temp;
+    // 1. Fixed suggested-chip mappings (exact match, no parsing)
+    if (SUGGESTED_CHIP_INTENTS[text]) {
+        return SUGGESTED_CHIP_INTENTS[text];
+    }
+
+    const lower = text.toLowerCase();
+
+    // 2. Long numeric crime number → get_case_by_crimeno
+    const crimeNoMatch = text.match(/\b\d{10,18}\b/);
+    if (crimeNoMatch) {
+        return { intent: "get_case_by_crimeno", parameters: { crime_no: crimeNoMatch[0] } };
+    }
+
+    // 3. Suspect / accused + name → search_accused_by_name
+    const accusedMatch = lower.match(/(?:suspect|accused)\s+(?:named\s+)?([a-z][a-z\s]{1,30}?)(?:\s+acc-|\s+\d|$|,|\.)/i)
+        || lower.match(/(?:suspect|accused)\s+([a-z]{3,})/i);
+    if (accusedMatch) {
+        const name = accusedMatch[1].trim();
+        const stopWords = ["all", "firs", "cases", "details", "in", "the", "for", "linked", "to"];
+        if (name && !stopWords.includes(name.toLowerCase())) {
+            return { intent: "search_accused_by_name", parameters: { name: name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") } };
         }
     }
-    return row[bLen];
+
+    // 4. District name → get_cases_by_district
+    const foundDistrict = KARNATAKA_DISTRICTS.find(d => lower.includes(d.toLowerCase()));
+    if (foundDistrict) {
+        return { intent: "get_cases_by_district", parameters: { district_name: foundDistrict } };
+    }
+
+    // 5. Chargesheet → get_chargesheet_status (requires crime_no in text)
+    if (lower.includes("chargesheet") || lower.includes("charge sheet") || lower.includes("ಚಾರ್ಜ್")) {
+        const csCrimeNo = text.match(/\b\d{10,18}\b/);
+        if (csCrimeNo) {
+            return { intent: "get_chargesheet_status", parameters: { crime_no: csCrimeNo[0] } };
+        }
+    }
+
+    // 6. Network / associates / linked → get_accused_network
+    if (/\b(network|associates?|linked|gang)\b/i.test(lower) || lower.includes("ಸಹಚರ")) {
+        const accusedId = text.match(/accused_master_id[=:\s]+(\d+)/i);
+        const caseId = text.match(/case_master_id[=:\s]+(\d+)/i);
+        if (accusedId) {
+            return { intent: "get_accused_network", parameters: { accused_master_id: parseInt(accusedId[1], 10) } };
+        }
+        if (caseId) {
+            return { intent: "get_accused_network", parameters: { case_master_id: parseInt(caseId[1], 10) } };
+        }
+    }
+
+    // 7. MO / pattern / similar → get_mo_matches
+    if (/\b(mo|modus operandi|pattern|similar)\b/i.test(lower) || lower.includes("ಎಂಒ")) {
+        const moCrimeNo = text.match(/\b\d{10,18}\b/);
+        const moAccusedId = text.match(/accused_master_id[=:\s]+(\d+)/i);
+        if (moAccusedId) {
+            return { intent: "get_mo_matches", parameters: { accused_master_id: parseInt(moAccusedId[1], 10) } };
+        }
+        if (moCrimeNo) {
+            return { intent: "get_mo_matches", parameters: { crime_no: moCrimeNo[0] } };
+        }
+    }
+
+    return null;
 }
 
 /**
- * Helper to escape HTML characters in user input to prevent XSS
+ * CALL BACKEND API
+ * POSTs to Catalyst serverless function and double-parses the `output` JSON string field.
+ *
+ * @param {string} intent
+ * @param {Object} parameters
+ * @returns {Promise<Object>} Parsed response object
  */
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+async function callBackend(intent, parameters = {}) {
+    const payload = {
+        intent,
+        parameters,
+        conversation_id: "conv_" + Date.now(),
+        turn_id: 1
+    };
 
-/**
- * Finds a suspect in MOCK_SUSPECTS matching query by exact substring or Levenshtein distance fuzzy matching
- * @param {string} query 
- * @returns {Object|null} Suspect object or null if no match found
- */
-function findSuspectByQuery(query) {
-    if (!query || !query.trim()) return null;
-    const lowerQuery = query.toLowerCase().trim();
-
-    // 1. Exact substring matching against matchKeywords
-    let matched = MOCK_SUSPECTS.find(suspect => {
-        return suspect.matchKeywords.some(keyword => lowerQuery.includes(keyword.toLowerCase()));
-    });
-    if (matched) return matched;
-
-    // 2. Fuzzy matching: check for close matches (at most 1-2 char difference) for keywords longer than 4 chars
-    const queryWords = lowerQuery.split(/[^a-z0-9\u0C80-\u0CFF]+/i).filter(w => w.length >= 3);
-
-    matched = MOCK_SUSPECTS.find(suspect => {
-        return suspect.matchKeywords.some(keyword => {
-            const kw = keyword.toLowerCase();
-            if (kw.length <= 4) return false;
-
-            const maxAllowedDist = kw.length > 6 ? 2 : 1;
-
-            return queryWords.some(word => {
-                if (Math.abs(word.length - kw.length) > maxAllowedDist) return false;
-                return levenshteinDistance(word, kw) <= maxAllowedDist;
-            });
-        });
+    const response = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
     });
 
-    return matched || null;
+    if (!response.ok) {
+        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    let parsed;
+    if (data && typeof data.output === "string") {
+        try {
+            parsed = JSON.parse(data.output);
+        } catch (e) {
+            throw new Error("Failed to parse backend output JSON string: " + e.message);
+        }
+    } else if (data && typeof data.output === "object" && data.output !== null) {
+        parsed = data.output;
+    } else {
+        parsed = data;
+    }
+
+    if (parsed.status === "error") {
+        const errorMsg = (parsed.error && parsed.error.message) || parsed.message || "Backend error occurred";
+        throw new Error(errorMsg);
+    }
+
+    return parsed;
 }
 
 // ==========================================================================
-// 5. RENDER STATE 2 WITH DATA & QUERY HANDLING
+// 4. QUERY SUBMISSION & RENDER LOGIC
 // ==========================================================================
 
+function setLoadingOverlay(active) {
+    const overlay = document.getElementById('query-loading-overlay');
+    if (!overlay) return;
+    overlay.classList.toggle('active', active);
+    overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
+    if (active && window.SentinelAnimations?.startLoadingPulse) {
+        window.SentinelAnimations.startLoadingPulse();
+    } else if (!active && window.SentinelAnimations?.stopLoadingPulse) {
+        window.SentinelAnimations.stopLoadingPulse();
+    }
+}
+
+async function handleQuerySubmit(userQuery) {
+    const rawQuery = (userQuery && userQuery.trim()) ? userQuery.trim() : "";
+    setLoadingOverlay(true);
+
+    const intentObj = resolveIntent(rawQuery);
+
+    if (!intentObj) {
+        renderErrorState(
+            rawQuery ? "Could not determine query type, try rephrasing" : "Please enter a query",
+            rawQuery || "(empty query)"
+        );
+        switchState(2);
+        setLoadingOverlay(false);
+        clearChatInputs();
+        return;
+    }
+
+    try {
+        const backendResponse = await callBackend(intentObj.intent, intentObj.parameters);
+        renderState2WithBackendResponse(backendResponse, rawQuery, intentObj);
+        switchState(2);
+    } catch (err) {
+        console.error("Backend Execution Error:", err);
+        renderErrorState(err.message || "An unexpected error occurred while querying intelligence backend", rawQuery);
+        switchState(2);
+    } finally {
+        setLoadingOverlay(false);
+        clearChatInputs();
+    }
+}
+
+function clearChatInputs() {
+    const input1 = document.getElementById('chat-input-1');
+    const input2 = document.getElementById('chat-input-2');
+    if (input1) input1.value = '';
+    if (input2) input2.value = '';
+}
+
 /**
- * Updates all DOM elements in State 2 to display a specific suspect's dataset or No Results state
- * @param {Object|null} data - A suspect's `data` object or null if no match found
- * @param {string} [queryText] - The user query text
+ * Renders State 2 with data returned from the live backend.
  */
-function renderState2WithData(data, queryText) {
+function renderState2WithBackendResponse(response, queryText, intentObj) {
     const state2View = document.getElementById('state-2-view');
     const answerCard = document.querySelector('.direct-answer-card');
     const activeQueryEl = document.getElementById('active-query-text');
@@ -618,17 +379,18 @@ function renderState2WithData(data, queryText) {
     const answerBodyEl = document.getElementById('answer-body-text');
     const isKn = currentLang === 'kn';
 
-    if (!data) {
-        // --- NO RESULTS FOUND STATE ---
+    if (activeQueryEl) activeQueryEl.textContent = queryText;
+
+    const results = response.results || [];
+    const resultCount = typeof response.result_count === "number" ? response.result_count : results.length;
+    const evidence = response.evidence || { source_tables: [], query_summary: "" };
+
+    if (resultCount === 0 || results.length === 0) {
         window.ACTIVE_ENTITY_DATA = null;
-        window.LAST_QUERY_NO_RESULTS = queryText || "Query";
+        window.LAST_QUERY_NO_RESULTS = queryText;
 
         if (state2View) state2View.classList.add('no-results-mode');
         if (answerCard) answerCard.classList.add('no-results');
-
-        if (activeQueryEl && queryText) {
-            activeQueryEl.textContent = queryText;
-        }
 
         if (answerHeaderEl) {
             answerHeaderEl.innerHTML = `
@@ -638,29 +400,28 @@ function renderState2WithData(data, queryText) {
                         <line x1="12" y1="8" x2="12" y2="12"/>
                         <line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
-                    <span>${isKn ? "ಯಾವುದೇ ಪಂದ್ಯ ಸಿಗಲಿಲ್ಲ" : "No Match Found"}</span>
+                    <span>${isKn ? "ಯಾವುದೇ ಪಂದ್ಯ ಸಿಗಲಿಲ್ಲ" : "No Results Found"}</span>
                 </div>
                 <span class="confidence-badge">${isKn ? "0 ಫಲಿತಾಂಶಗಳು" : "0 Matches"}</span>
             `;
         }
 
         if (answerBodyEl) {
-            const escapedQuery = escapeHtml(queryText || "");
+            const escapedQuery = escapeHtml(queryText);
             answerBodyEl.innerHTML = isKn
-                ? `<strong>"${escapedQuery}"</strong> ಗಾಗಿ ಯಾವುದೇ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ. ಶಂಕಿತರ ಹೆಸರು, ACC ID, ಅಥವಾ ಅಪರಾಧದ ಪ್ರಕಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.`
-                : `No matching records found for <strong>"${escapedQuery}"</strong>. Try a suspect name, ACC ID, or crime type.`;
+                ? `<strong>"${escapedQuery}"</strong> ಗಾಗಿ ಯಾವುದೇ ಹೊಂದಾಣಿಕೆಯ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.`
+                : `No matching records found for <strong>"${escapedQuery}"</strong>. Please verify the suspect name, FIR number, or district and try again.`;
         }
+
+        renderReasoningEvidence(evidence);
+        hideAllPreviewCards();
         return;
     }
 
-    // --- NORMAL MATCHED SUSPECT STATE ---
-    window.ACTIVE_ENTITY_DATA = data;
     window.LAST_QUERY_NO_RESULTS = null;
-
     if (state2View) state2View.classList.remove('no-results-mode');
     if (answerCard) answerCard.classList.remove('no-results');
 
-    // Restore standard Answer Header
     if (answerHeaderEl) {
         answerHeaderEl.innerHTML = `
             <div class="ai-badge">
@@ -675,151 +436,515 @@ function renderState2WithData(data, queryText) {
         `;
     }
 
-    // 1. Update #active-query-text
-    if (activeQueryEl) {
-        activeQueryEl.textContent = queryText ? queryText : (isKn ? data.queryTextKn : data.queryTextEn);
-    }
-
-    // 2. Update #answer-body-text innerHTML
     if (answerBodyEl) {
-        answerBodyEl.innerHTML = isKn ? data.directAnswerKn : data.directAnswerEn;
+        answerBodyEl.innerHTML = buildDirectAnswerSentence(response, intentObj.intent, isKn);
     }
 
-    // 3. Update the 5 Preview Cards dynamically
-    const cardKeys = ["linked-cases", "chargesheet", "arrests", "network", "mo-matches"];
-    cardKeys.forEach(key => {
-        const cardEl = document.querySelector(`.preview-card[data-card="${key}"]`);
-        const cardData = data.cardsDetail ? data.cardsDetail[key] : null;
-        if (!cardEl || !cardData) return;
+    renderReasoningEvidence(evidence);
 
-        // Update Card Title
+    const cardsData = buildCardsDataFromResults(response, intentObj.intent, isKn);
+    window.ACTIVE_ENTITY_DATA = { cardsDetail: cardsData };
+    updatePreviewCardsUI(cardsData, intentObj.intent, isKn);
+}
+
+function buildDirectAnswerSentence(response, intent, isKn) {
+    const results = response.results || [];
+    const count = typeof response.result_count === "number" ? response.result_count : results.length;
+    const first = results[0] || {};
+
+    if (intent === "get_case_by_crimeno") {
+        const cno = first.crime_no || first.case_no || "—";
+        const dist = first.district_name || "—";
+        const unit = first.unit_name || first.ps_name || "—";
+        const status = first.case_status || first.case_status_name || "—";
+        const head = first.crime_head || first.crime_subhead || "—";
+        return isKn
+            ? `ಎಫ್‌ಐಆರ್ <strong>${escapeHtml(cno)}</strong>: <strong>${escapeHtml(dist)}</strong> (${escapeHtml(unit)}) — <strong>${escapeHtml(head)}</strong>. ಸ್ಥಿತಿ: <strong>${escapeHtml(status)}</strong>.`
+            : `Case <strong>${escapeHtml(cno)}</strong> registered at <strong>${escapeHtml(unit)}</strong>, <strong>${escapeHtml(dist)}</strong> under <strong>${escapeHtml(head)}</strong>. Current status: <strong>${escapeHtml(status)}</strong>.`;
+    }
+
+    if (intent === "search_accused_by_name" || intent === "get_accused_by_case") {
+        const name = first.accused_name || first.name || "—";
+        const dist = first.district_name || "—";
+        const cno = first.crime_no || "—";
+        return isKn
+            ? `ಶಂಕಿತ <strong>${escapeHtml(name)}</strong> — <strong>${count}</strong> ದಾಖಲೆ(ಗಳು), ${escapeHtml(dist)} ಜಿಲ್ಲೆ, ಎಫ್‌ಐಆರ್ <strong>${escapeHtml(cno)}</strong>.`
+            : `Found <strong>${count}</strong> record(s) for suspect <strong>${escapeHtml(name)}</strong> in <strong>${escapeHtml(dist)}</strong>, linked to FIR <strong>${escapeHtml(cno)}</strong>.`;
+    }
+
+    if (intent === "get_cases_by_district") {
+        const distName = first.district_name || "the specified district";
+        return isKn
+            ? `<strong>${escapeHtml(distName)}</strong> ಜಿಲ್ಲೆಯಲ್ಲಿ <strong>${count}</strong> ಪ್ರಕರಣ ದಾಖಲೆ(ಗಳು) ದೊರೆತಿವೆ.`
+            : `Retrieved <strong>${count}</strong> case record(s) registered in <strong>${escapeHtml(distName)}</strong> district.`;
+    }
+
+    if (intent === "get_chargesheet_status") {
+        const cno = first.crime_no || "—";
+        const cstype = first.cstype || first.chargesheet_status || "—";
+        const csdate = first.csdate || first.chargesheet_date || "";
+        return isKn
+            ? `ಎಫ್‌ಐಆರ್ <strong>${escapeHtml(cno)}</strong> ಚಾರ್ಜ್‌ಶೀಟ್: <strong>${escapeHtml(cstype)}</strong>${csdate ? ` (${escapeHtml(csdate)})` : ""}.`
+            : `Chargesheet for FIR <strong>${escapeHtml(cno)}</strong>: status <strong>${escapeHtml(cstype)}</strong>${csdate ? `, filed ${escapeHtml(csdate)}` : ""}. Total records: <strong>${count}</strong>.`;
+    }
+
+    if (intent === "get_accused_network") {
+        const name = first.accused_name || first.associate_name || "—";
+        const link = first.link_type || first.relationship || "associate";
+        return isKn
+            ? `<strong>${count}</strong> ನೆಟ್‌ವರ್ಕ್ ಸಂಪರ್ಕ(ಗಳು). ಪ್ರಮುಖ: <strong>${escapeHtml(name)}</strong> (${escapeHtml(link)}).`
+            : `Found <strong>${count}</strong> network associate(s). Primary match: <strong>${escapeHtml(name)}</strong> (${escapeHtml(link)}).`;
+    }
+
+    if (intent === "get_mo_matches") {
+        const subhead = first.crime_subhead || first.mo_pattern || "—";
+        const dist = first.district_name || "—";
+        return isKn
+            ? `<strong>${count}</strong> ಎಂಒ ಪಂದ್ಯದ ಪ್ರಕರಣ(ಗಳು) — <strong>${escapeHtml(subhead)}</strong>, ${escapeHtml(dist)}.`
+            : `Identified <strong>${count}</strong> Modus Operandi match(es) for <strong>${escapeHtml(subhead)}</strong> in <strong>${escapeHtml(dist)}</strong>.`;
+    }
+
+    if (intent === "get_arrests_by_officer") {
+        const officer = first.employee_name || first.officer_name || "—";
+        return isKn
+            ? `<strong>${count}</strong> ಬಂಧನ ದಾಖಲೆ(ಗಳು) ಅಧಿಕಾರಿ <strong>${escapeHtml(officer)}</strong> ಗೆ ಸಂಬಂಧಿಸಿದಂತೆ.`
+            : `Retrieved <strong>${count}</strong> arrest record(s) linked to officer <strong>${escapeHtml(officer)}</strong>.`;
+    }
+
+    if (intent === "get_cases_by_status") {
+        const status = first.case_status || first.case_status_name || "—";
+        return isKn
+            ? `<strong>${count}</strong> ಪ್ರಕರಣ(ಗಳು) "<strong>${escapeHtml(status)}</strong>" ಸ್ಥಿತಿಯಲ್ಲಿ.`
+            : `Found <strong>${count}</strong> case(s) with status <strong>${escapeHtml(status)}</strong>.`;
+    }
+
+    if (intent === "get_cases_by_gravity") {
+        const gravity = first.gravity_level || "—";
+        return isKn
+            ? `<strong>${count}</strong> <strong>${escapeHtml(gravity)}</strong> ಪ್ರಕರಣ(ಗಳು) ದೊರೆತಿವೆ.`
+            : `Retrieved <strong>${count}</strong> <strong>${escapeHtml(gravity)}</strong> case(s).`;
+    }
+
+    const anchor = first.crime_no || first.accused_name || first.district_name || first.court_name || "—";
+    return isKn
+        ? `<strong>${count}</strong> ದಾಖಲೆ(ಗಳು) ದೊರೆತಿವೆ (ಪ್ರಮುಖ: <strong>${escapeHtml(anchor)}</strong>).`
+        : `Retrieved <strong>${count}</strong> record(s) from crime intelligence backend (primary: <strong>${escapeHtml(anchor)}</strong>).`;
+}
+
+function hideAllPreviewCards() {
+    document.querySelectorAll('.preview-card').forEach(card => {
+        card.style.display = 'none';
+    });
+}
+
+function updatePreviewCardsUI(cardsData, intent, isKn) {
+    const visibleKeys = INTENT_VISIBLE_CARDS[intent] || ["linked-cases"];
+    const cardMeta = getCardMetaForIntent(intent, isKn);
+
+    ["linked-cases", "chargesheet", "arrests", "network", "mo-matches"].forEach(key => {
+        const cardEl = document.querySelector(`.preview-card[data-card="${key}"]`);
+        const cardData = cardsData ? cardsData[key] : null;
+        if (!cardEl) return;
+
+        const isVisible = visibleKeys.includes(key) && cardData && (cardData.rows || []).length > 0;
+        cardEl.style.display = isVisible ? '' : 'none';
+        if (!isVisible) return;
+
+        const meta = cardMeta[key] || {};
         const titleEl = cardEl.querySelector('.card-title');
-        if (titleEl) {
-            titleEl.textContent = isKn ? cardData.titleKn : cardData.titleEn;
+        if (titleEl) titleEl.textContent = isKn ? (cardData.titleKn || meta.titleKn) : (cardData.titleEn || meta.titleEn);
+
+        const statLabelEl = cardEl.querySelector('.stat-label');
+        if (statLabelEl && meta.statLabel) {
+            statLabelEl.textContent = isKn ? meta.statLabelKn : meta.statLabel;
         }
 
         const rows = cardData.rows || [];
-
-        // Update Stat Number
         const statNumEl = cardEl.querySelector('.stat-number');
         if (statNumEl) {
-            if (key === "linked-cases") {
-                statNumEl.textContent = rows.length;
-            } else if (key === "chargesheet") {
+            if (key === "chargesheet") {
                 const filedCount = rows.filter(r => {
-                    const recNo = (r[0] || "").toLowerCase();
-                    const statusStr = (r[3] || "").toLowerCase();
-                    return recNo.startsWith("cs-20") || statusStr.includes("filed") || statusStr.includes("disposed") || statusStr.includes("trial") || statusStr.includes("convicted") || statusStr.includes("ಸಲ್ಲಿಕೆ");
+                    const status = String(r[3] || "").toLowerCase();
+                    return status.includes("filed") || status.includes("sheet") || String(r[0] || "").startsWith("CS");
                 }).length;
                 statNumEl.innerHTML = `${filedCount} <small>/ ${rows.length}</small>`;
-            } else if (key === "arrests") {
-                statNumEl.textContent = rows.length;
-            } else if (key === "network") {
-                statNumEl.textContent = rows.length;
-            } else if (key === "mo-matches") {
+            } else {
                 statNumEl.textContent = rows.length;
             }
         }
 
-        // Update Sub-info badges/pills
         const subInfoEl = cardEl.querySelector('.card-sub-info');
         if (subInfoEl) {
-            if (key === "linked-cases") {
-                const badge = subInfoEl.querySelector('.sub-badge');
-                if (badge) {
-                    badge.textContent = isKn ? `${rows.length} ಪ್ರಕರಣಗಳು ನೋಂದಾಯಿಸಲಾಗಿದೆ` : `${rows.length} Total FIR Records`;
-                }
-            } else if (key === "chargesheet") {
-                const pills = subInfoEl.querySelectorAll('.sub-pill');
-                if (pills.length >= 2) {
-                    const filedCount = rows.filter(r => {
-                        const recNo = (r[0] || "").toLowerCase();
-                        const statusStr = (r[3] || "").toLowerCase();
-                        return recNo.startsWith("cs-20") || statusStr.includes("filed") || statusStr.includes("disposed") || statusStr.includes("trial") || statusStr.includes("convicted") || statusStr.includes("ಸಲ್ಲಿಕೆ");
-                    }).length;
-                    const pendingCount = rows.length - filedCount;
-                    pills[0].textContent = isKn ? `${filedCount} ಚಾರ್ಜ್‌ಶೀಟ್` : `${filedCount} Chargesheeted`;
-                    pills[1].textContent = isKn ? `${pendingCount} ಬಾಕಿ` : `${pendingCount} Pending`;
-                }
-            } else if (key === "arrests") {
-                const badge = subInfoEl.querySelector('.sub-badge');
-                if (badge) {
-                    const latestDate = rows.length > 0 ? rows[0][1] : "N/A";
-                    badge.textContent = isKn ? `ಇತ್ತೀಚಿನದು: ${latestDate}` : `Latest: ${latestDate}`;
-                }
-            } else if (key === "network") {
-                const badge = subInfoEl.querySelector('.sub-badge');
-                if (badge) {
-                    badge.textContent = isKn ? `${rows.length} ಸಹಚರರು ಮತ್ತು ಸ್ವೀಕರಿಸುವವರು` : `${rows.length} Known Associates`;
-                }
-            } else if (key === "mo-matches") {
-                const badge = subInfoEl.querySelector('.sub-badge');
-                if (badge) {
-                    badge.textContent = isKn ? `${rows.length} ಹೊಂದಾಣಿಕೆಯ ಪ್ರಕರಣಗಳು (>80%)` : `${rows.length} Matched Cases (>80%)`;
-                }
-            }
+            const subText = buildCardSubInfo(key, rows, intent, isKn);
+            subInfoEl.innerHTML = subText;
         }
     });
 
-    // Animate Stat Numbers (0 -> Target)
     animateStatNumbers();
 }
 
-/**
- * Animates preview card main stat numbers from 0 up to their target values
- */
-function animateStatNumbers() {
-    if (window.SentinelAnimations && typeof window.SentinelAnimations.animateStatNumbers === 'function') {
-        window.SentinelAnimations.animateStatNumbers();
-        return;
+function getCardMetaForIntent(intent, isKn) {
+    const defaults = {
+        "linked-cases": { titleEn: "Linked Cases", titleKn: "ಸಂಪರ್ಕಿತ ಪ್ರಕರಣಗಳು", statLabel: "Total Cases", statLabelKn: "ಒಟ್ಟು ಪ್ರಕರಣಗಳು" },
+        "chargesheet": { titleEn: "Chargesheet Status", titleKn: "ಚಾರ್ಜ್‌ಶೀಟ್ ಸ್ಥಿತಿ", statLabel: "Filed", statLabelKn: "ಸಲ್ಲಿಸಲಾಗಿದೆ" },
+        "arrests": { titleEn: "Arrest History", titleKn: "ಬಂಧನ ಇತಿಹಾಸ", statLabel: "Arrest Records", statLabelKn: "ಬಂಧನ ದಾಖಲೆಗಳು" },
+        "network": { titleEn: "Network View", titleKn: "ನೆಟ್‌ವರ್ಕ್ ನೋಟ", statLabel: "Associates", statLabelKn: "ಸಹಚರರು" },
+        "mo-matches": { titleEn: "MO Match Flags", titleKn: "ಎಂ.ಒ. ಪಂದ್ಯದ ಫ್ಲ್ಯಾಗ್‌ಗಳು", statLabel: "Matched Cases", statLabelKn: "ಪಂದ್ಯದ ಪ್ರಕರಣಗಳು" }
+    };
+
+    if (intent === "get_cases_by_district") {
+        defaults["linked-cases"].statLabel = "District FIRs";
+        defaults["linked-cases"].statLabelKn = "ಜಿಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳು";
+    }
+    if (intent === "get_arrests_by_officer") {
+        defaults["arrests"].statLabel = "Arrests by Officer";
+        defaults["arrests"].statLabelKn = "ಅಧಿಕಾರಿಯ ಬಂಧನಗಳು";
     }
 
-    const statEls = document.querySelectorAll('.preview-card .stat-number');
-    statEls.forEach(el => {
-        const text = el.textContent || el.innerText;
-        const slashMatch = text.match(/^(\d+)\s*\/\s*(\d+)$/);
-        if (slashMatch) {
-            const targetNum = parseInt(slashMatch[1], 10);
-            const totalNum = parseInt(slashMatch[2], 10);
-            const duration = 600;
-            const startTime = performance.now();
+    return defaults;
+}
 
-            function updateSlashCounter(now) {
-                const elapsed = now - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const easeProgress = 1 - Math.pow(1 - progress, 2);
-                const currentNum = Math.floor(easeProgress * targetNum);
-                el.innerHTML = `${currentNum} <small>/ ${totalNum}</small>`;
-                if (progress < 1) {
-                    requestAnimationFrame(updateSlashCounter);
-                } else {
-                    el.innerHTML = `${targetNum} <small>/ ${totalNum}</small>`;
-                }
-            }
-            requestAnimationFrame(updateSlashCounter);
+function buildCardSubInfo(cardKey, rows, intent, isKn) {
+    if (cardKey === "linked-cases") {
+        const districts = [...new Set(rows.map(r => (r[1] || "").split("(")[0].trim()).filter(Boolean))];
+        const label = districts.length
+            ? (isKn ? `${districts.length} ಜಿಲ್ಲೆ(ಗಳು)` : `${districts.length} District(s): ${districts.slice(0, 2).join(", ")}`)
+            : (isKn ? `${rows.length} ದಾಖಲೆಗಳು` : `${rows.length} Active Records`);
+        return `<span class="sub-badge">${escapeHtml(label)}</span>`;
+    }
+    if (cardKey === "chargesheet") {
+        const pending = rows.filter(r => String(r[3] || "").toLowerCase().includes("pending")).length;
+        const filed = rows.length - pending;
+        return `<span class="sub-pill success">${filed} ${isKn ? "ಸಲ್ಲಿಸಲಾಗಿದೆ" : "Filed"}</span>` +
+            (pending ? `<span class="sub-pill warning">${pending} ${isKn ? "ಬಾಕಿ" : "Pending"}</span>` : "");
+    }
+    if (cardKey === "arrests") {
+        const latest = rows[0] ? rows[0][1] : "";
+        return latest
+            ? `<span class="sub-badge text-amber">${isKn ? "ಇತ್ತೀಚಿನ:" : "Latest:"} ${escapeHtml(latest)}</span>`
+            : `<span class="sub-badge">${rows.length} ${isKn ? "ದಾಖಲೆಗಳು" : "Records"}</span>`;
+    }
+    if (cardKey === "network") {
+        return `<span class="sub-badge">${isKn ? "ಸಹಚರ ನೆಟ್‌ವರ್ಕ್" : "Associate Network"} • ${rows.length}</span>`;
+    }
+    if (cardKey === "mo-matches") {
+        return `<span class="sub-badge text-danger">${rows.length} ${isKn ? "ಎಂಒ ಪಂದ್ಯಗಳು" : "MO Matches"}</span>`;
+    }
+    return `<span class="sub-badge">${rows.length} ${isKn ? "ದಾಖಲೆಗಳು" : "Records"}</span>`;
+}
+
+function buildCardsDataFromResults(response, intent, isKn) {
+    const results = response.results || [];
+
+    const caseRows = results
+        .filter(r => r.crime_no || r.case_no || r.case_master_id || r.district_name)
+        .map(r => [
+            r.crime_no || r.case_no || `ID-${r.case_master_id}`,
+            `${r.district_name || "—"} (${r.unit_name || r.ps_name || "PS"})`,
+            r.crime_head || r.crime_subhead || r.act_short_name || "—",
+            r.case_status || r.case_status_name || "—"
+        ]);
+
+    const accusedRows = results
+        .filter(r => r.accused_name || r.name || r.accused_master_id)
+        .map(r => [
+            r.accused_name || r.name || `ACC-${r.accused_master_id}`,
+            r.accused_person_id || r.link_type || r.alias || "Accused",
+            r.crime_no || r.case_no || "—",
+            r.district_name || r.case_status || "—"
+        ]);
+
+    const arrestRows = results
+        .filter(r => r.arrest_id || r.arrest_date || r.employee_name)
+        .map(r => [
+            r.arrest_id || `ARR-${r.arrest_master_id || "—"}`,
+            r.arrest_date || r.date_of_arrest || "—",
+            r.unit_name || r.district_name || r.employee_name || "—",
+            r.bail_status || r.status || "—"
+        ]);
+
+    const csRows = results
+        .filter(r => r.csid || r.cstype || r.csdate || r.chargesheet_status)
+        .map(r => [
+            r.csid ? `CS-${r.csid}` : (r.chargesheet_no || "CS-Record"),
+            r.crime_no || "—",
+            r.csdate || r.chargesheet_date || "—",
+            r.cstype || r.chargesheet_status || "—"
+        ]);
+
+    const networkRows = results
+        .filter(r => r.accused_name || r.associate_name || r.link_type)
+        .map(r => [
+            r.accused_name || r.associate_name || `ACC-${r.accused_master_id || "—"}`,
+            r.link_type || r.relationship || r.alias || "Associate",
+            r.crime_no || r.shared_case || "—",
+            r.district_name || r.status || "—"
+        ]);
+
+    const moRows = results
+        .filter(r => r.crime_no || r.crime_subhead || r.mo_pattern)
+        .map(r => [
+            r.crime_no || r.case_no || "—",
+            `${r.district_name || "—"} (${r.unit_name || "PS"})`,
+            r.crime_subhead || r.mo_pattern || "—",
+            r.match_score ? `${r.match_score}%` : (r.case_status || "—")
+        ]);
+
+    const cards = {};
+
+    if (caseRows.length) {
+        cards["linked-cases"] = {
+            icon: "📄",
+            titleEn: "Linked Cases", titleKn: "ಸಂಪರ್ಕಿತ ಪ್ರಕರಣಗಳು",
+            headersEn: ["FIR / Case No.", "Station / District", "Offence", "Status"],
+            headersKn: ["ಎಫ್‌ಐಆರ್ ಸಂಖ್ಯೆ", "ಠಾಣೆ / ಜಿಲ್ಲೆ", "ಅಪರಾಧ", "ಸ್ಥಿತಿ"],
+            rows: caseRows
+        };
+    }
+
+    if (csRows.length) {
+        cards["chargesheet"] = {
+            icon: "⚖️",
+            titleEn: "Chargesheet Status", titleKn: "ಚಾರ್ಜ್‌ಶೀಟ್ ಸ್ಥಿತಿ",
+            headersEn: ["CS Record No.", "Related FIR", "File Date", "Status"],
+            headersKn: ["ಚಾರ್ಜ್‌ಶೀಟ್ ಸಂಖ್ಯೆ", "ಸಂಬಂಧಿತ ಎಫ್‌ಐಆರ್", "ದಿನಾಂಕ", "ಸ್ಥಿತಿ"],
+            rows: csRows
+        };
+    }
+
+    if (arrestRows.length) {
+        cards["arrests"] = {
+            icon: "⛓️",
+            titleEn: "Arrest History", titleKn: "ಬಂಧನ ಇತಿಹಾಸ",
+            headersEn: ["Arrest ID", "Date", "Station / Officer", "Status"],
+            headersKn: ["ಬಂಧನ ಐಡಿ", "ದಿನಾಂಕ", "ಠಾಣೆ", "ಸ್ಥಿತಿ"],
+            rows: arrestRows
+        };
+    } else if (accusedRows.length && ["search_accused_by_name", "get_accused_by_case"].includes(intent)) {
+        cards["arrests"] = {
+            icon: "⛓️",
+            titleEn: "Accused Records", titleKn: "ಶಂಕಿತ ದಾಖಲೆಗಳು",
+            headersEn: ["Accused Name", "Role", "Linked FIR", "District / Status"],
+            headersKn: ["ಶಂಕಿತ ಹೆಸರು", "ಪಾತ್ರ", "ಎಫ್‌ಐಆರ್", "ಸ್ಥಿತಿ"],
+            rows: accusedRows
+        };
+    }
+
+    if (networkRows.length) {
+        cards["network"] = {
+            icon: "🕸️",
+            titleEn: "Network View", titleKn: "ನೆಟ್‌ವರ್ಕ್ ನೋಟ",
+            headersEn: ["Associate Name", "Relationship", "Shared Case", "District / Status"],
+            headersKn: ["ಸಹಚರ ಹೆಸರು", "ಸಂಬಂಧ", "ಪ್ರಕರಣ", "ಸ್ಥಿತಿ"],
+            rows: networkRows
+        };
+    }
+
+    if (moRows.length) {
+        cards["mo-matches"] = {
+            icon: "🚨",
+            titleEn: "MO Match Flags", titleKn: "ಎಂ.ಒ. ಪಂದ್ಯದ ಫ್ಲ್ಯಾಗ್‌ಗಳು",
+            headersEn: ["Case FIR", "District / Station", "MO Pattern", "Match"],
+            headersKn: ["ಎಫ್‌ಐಆರ್", "ಜಿಲ್ಲೆ", "ಎಂಒ ಮಾದರಿ", "ಪಂದ್ಯ"],
+            rows: moRows
+        };
+    }
+
+    return cards;
+}
+
+function renderReasoningEvidence(evidence) {
+    const accordion = document.getElementById('reasoning-details');
+    if (!accordion) return;
+
+    const sourceTables = (evidence && evidence.source_tables) ? evidence.source_tables : [];
+    const querySummary = (evidence && evidence.query_summary) ? evidence.query_summary : "";
+
+    const chipsContainer = accordion.querySelector('.tables-chips-list');
+    if (chipsContainer) {
+        chipsContainer.innerHTML = sourceTables.length
+            ? sourceTables.map(tbl => `<span class="table-chip">${escapeHtml(tbl)}</span>`).join(' ')
+            : `<span class="table-chip">${escapeHtml("No source tables returned")}</span>`;
+    }
+
+    const codeBlock = accordion.querySelector('.query-code-block pre code');
+    if (codeBlock) {
+        codeBlock.textContent = querySummary || "No query summary returned by backend.";
+    }
+
+    const summaryBadge = accordion.querySelector('.summary-badge');
+    if (summaryBadge) {
+        const isKn = currentLang === 'kn';
+        const count = sourceTables.length;
+        summaryBadge.textContent = isKn
+            ? `${count} CCTNS ಕೋಷ್ಟಕಗಳು • ZCQL ಜಾರಿಯಾಗಿದೆ`
+            : `${count} CCTNS Tables • ZCQL Executed`;
+    }
+}
+
+function renderErrorState(errorMessage, queryText) {
+    const state2View = document.getElementById('state-2-view');
+    const answerCard = document.querySelector('.direct-answer-card');
+    const activeQueryEl = document.getElementById('active-query-text');
+    const answerHeaderEl = document.querySelector('.direct-answer-card .answer-header');
+    const answerBodyEl = document.getElementById('answer-body-text');
+    const isKn = currentLang === 'kn';
+
+    window.ACTIVE_ENTITY_DATA = null;
+    window.LAST_QUERY_NO_RESULTS = queryText;
+
+    if (state2View) state2View.classList.add('no-results-mode');
+    if (answerCard) answerCard.classList.add('no-results');
+    hideAllPreviewCards();
+
+    if (activeQueryEl) activeQueryEl.textContent = queryText;
+
+    const isIntentError = errorMessage.includes("Could not determine query type");
+    if (answerHeaderEl) {
+        answerHeaderEl.innerHTML = `
+            <div class="ai-badge" style="color:var(--accent-red,#EF4444);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>${isIntentError ? (isKn ? "ಪ್ರಶ್ನೆ ಗುರುತಿಸಲಾಗಲಿಲ್ಲ" : "Query Not Recognized") : (isKn ? "ದೋಷ ಉಂಟಾಗಿದೆ" : "Backend Query Error")}</span>
+            </div>
+            <span class="confidence-badge" style="border-color:rgba(239,68,68,0.4); color:#EF4444;">${isKn ? "ದೋಷ" : "Error"}</span>
+        `;
+    }
+
+    if (answerBodyEl) {
+        const escapedMsg = escapeHtml(errorMessage);
+        answerBodyEl.innerHTML = isKn
+            ? `<strong>${escapedMsg}</strong>`
+            : `<strong>${escapedMsg}</strong>`;
+    }
+}
+
+// ==========================================================================
+// 5. ROLE & LANGUAGE ACCESS CONTROLS
+// ==========================================================================
+
+function toggleRole() {
+    currentRole = (currentRole === 'investigator') ? 'supervisor' : 'investigator';
+    document.body.classList.remove('role-investigator', 'role-supervisor');
+    document.body.classList.add(`role-${currentRole}`);
+
+    const badgeText = document.getElementById('role-badge-text');
+    if (badgeText) {
+        if (currentRole === 'investigator') {
+            badgeText.className = 'role-badge investigator-badge';
+            badgeText.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span data-i18n="roleInvestigator">${TRANSLATIONS[currentLang].roleInvestigator}</span>
+            `;
         } else {
-            const numMatch = text.match(/^(\d+)/);
-            if (numMatch) {
-                const targetNum = parseInt(numMatch[1], 10);
-                const duration = 600;
-                const startTime = performance.now();
-
-                function updateCounter(now) {
-                    const elapsed = now - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const easeProgress = 1 - Math.pow(1 - progress, 2);
-                    const currentNum = Math.floor(easeProgress * targetNum);
-                    el.textContent = currentNum;
-                    if (progress < 1) {
-                        requestAnimationFrame(updateCounter);
-                    } else {
-                        el.textContent = targetNum;
-                    }
-                }
-                requestAnimationFrame(updateCounter);
-            }
+            badgeText.className = 'role-badge supervisor-badge';
+            badgeText.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12"/></svg>
+                <span data-i18n="roleSupervisor">${TRANSLATIONS[currentLang].roleSupervisor}</span>
+            `;
         }
+    }
+    renderSuggestedChips();
+}
+
+function toggleLanguage() {
+    currentLang = (currentLang === 'en') ? 'kn' : 'en';
+    document.body.classList.remove('lang-en', 'lang-kn');
+    document.body.classList.add(`lang-${currentLang}`);
+
+    const optEn = document.querySelector('.opt-en');
+    const optKn = document.querySelector('.opt-kn');
+    if (currentLang === 'en') {
+        optEn?.classList.add('active');
+        optKn?.classList.remove('active');
+    } else {
+        optKn?.classList.add('active');
+        optEn?.classList.remove('active');
+    }
+
+    updateTranslations();
+    renderSuggestedChips();
+}
+
+function updateTranslations() {
+    const t = TRANSLATIONS[currentLang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (DYNAMIC_I18N_KEYS.includes(key)) return;
+        if (t[key]) el.innerHTML = t[key];
     });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t[key]) el.setAttribute('placeholder', t[key]);
+    });
+}
+
+function renderSuggestedChips() {
+    const container = document.getElementById('suggested-chips');
+    if (!container) return;
+
+    const chipList = SUGGESTED_CHIPS[currentRole][currentLang];
+    container.innerHTML = '';
+
+    chipList.forEach(text => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'suggested-chip';
+        chip.innerHTML = `<span>⚡</span> ${text}`;
+        chip.addEventListener('click', () => handleQuerySubmit(text));
+        container.appendChild(chip);
+    });
+}
+
+// ==========================================================================
+// 6. PREVIEW CARD MODAL DETAIL WINDOW & UI NAVIGATION
+// ==========================================================================
+
+function openDetailModal(cardKey) {
+    const currentData = window.ACTIVE_ENTITY_DATA;
+    const data = (currentData && currentData.cardsDetail) ? currentData.cardsDetail[cardKey] : null;
+    if (!data || !data.rows || !data.rows.length) return;
+
+    const modal = document.getElementById('detail-modal');
+    const titleEl = document.getElementById('modal-title');
+    const iconEl = document.getElementById('modal-icon');
+    const bodyEl = document.getElementById('modal-body');
+
+    const isKn = currentLang === 'kn';
+    iconEl.textContent = data.icon || "📄";
+    titleEl.textContent = isKn ? (data.titleKn || data.titleEn) : data.titleEn;
+
+    const headers = isKn ? (data.headersKn || data.headersEn) : data.headersEn;
+
+    bodyEl.innerHTML = `
+        <table class="modal-table">
+            <thead>
+                <tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+                ${data.rows.map(row => `
+                    <tr>${row.map((cell, idx) => `
+                        <td ${idx === 0 ? 'style="font-weight:600; color:var(--text-main);"' : ''}>${escapeHtml(cell)}</td>
+                    `).join('')}</tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+    const modal = document.getElementById('detail-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
 }
 
 function switchState(stateNum) {
@@ -842,7 +967,7 @@ function switchState(stateNum) {
         view1?.classList.remove('active');
         view2?.classList.add('active');
         view2?.classList.remove('animate-in');
-        void view2?.offsetWidth; // Trigger reflow to restart CSS animations
+        void view2?.offsetWidth;
         view2?.classList.add('animate-in');
         btn1?.classList.remove('active');
         btn2?.classList.add('active');
@@ -851,10 +976,7 @@ function switchState(stateNum) {
         }
     }
 
-    // Redirect to top of summary view instantly without scrolling lag
-    if (mainContent) {
-        mainContent.scrollTop = 0;
-    }
+    if (mainContent) mainContent.scrollTop = 0;
     window.scrollTo(0, 0);
 }
 
@@ -862,196 +984,75 @@ function showState(stateNum) {
     switchState(stateNum);
 }
 
-function handleQuerySubmit(userQuery) {
-    const rawQuery = (userQuery && userQuery.trim()) ? userQuery.trim() : "Show all FIRs for suspect Manjunath ACC-89241";
-    const overlay = document.getElementById('query-loading-overlay');
-
-    if (overlay) {
-        overlay.classList.add('active');
-        if (window.SentinelAnimations?.startLoadingPulse) {
-            window.SentinelAnimations.startLoadingPulse();
-        }
+function animateStatNumbers() {
+    if (window.SentinelAnimations && typeof window.SentinelAnimations.animateStatNumbers === 'function') {
+        window.SentinelAnimations.animateStatNumbers();
     }
+}
 
-    setTimeout(() => {
-        const matchedSuspect = findSuspectByQuery(rawQuery);
-
-        if (matchedSuspect) {
-            renderState2WithData(matchedSuspect.data, rawQuery);
-        } else {
-            renderState2WithData(null, rawQuery);
-        }
-
-        switchState(2);
-
-        if (overlay) {
-            overlay.classList.remove('active');
-            if (window.SentinelAnimations?.stopLoadingPulse) {
-                window.SentinelAnimations.stopLoadingPulse();
-            }
-        }
-
-        // Reset input fields
-        const input1 = document.getElementById('chat-input-1');
-        if (input1) input1.value = '';
-        const input2 = document.getElementById('chat-input-2');
-        if (input2) input2.value = '';
-    }, 450);
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // ==========================================================================
-// 5. ROLE ACCESS CONTROL LOGIC (Investigator vs Supervisor)
+// 7. INITIALIZATION ON DOM CONTENT LOADED
 // ==========================================================================
-function toggleRole() {
-    currentRole = (currentRole === 'investigator') ? 'supervisor' : 'investigator';
-
-    // Update body CSS class
-    document.body.classList.remove('role-investigator', 'role-supervisor');
-    document.body.classList.add(`role-${currentRole}`);
-
-    // Update Role Badge UI
-    const badgeText = document.getElementById('role-badge-text');
-    if (badgeText) {
-        if (currentRole === 'investigator') {
-            badgeText.className = 'role-badge investigator-badge';
-            badgeText.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span data-i18n="roleInvestigator">${TRANSLATIONS[currentLang].roleInvestigator}</span>
-            `;
-        } else {
-            badgeText.className = 'role-badge supervisor-badge';
-            badgeText.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-                <span data-i18n="roleSupervisor">${TRANSLATIONS[currentLang].roleSupervisor}</span>
-            `;
-        }
-    }
-
-    // Re-render suggested query chips (hides individual lookup chips for Supervisor)
+document.addEventListener('DOMContentLoaded', () => {
+    initEventListeners();
     renderSuggestedChips();
-}
-
-// ==========================================================================
-// 6. LANGUAGE TRANSLATION LOGIC (EN <-> Kannada)
-// ==========================================================================
-function toggleLanguage() {
-    currentLang = (currentLang === 'en') ? 'kn' : 'en';
-
-    // Update Body class
-    document.body.classList.remove('lang-en', 'lang-kn');
-    document.body.classList.add(`lang-${currentLang}`);
-
-    // Update Language Toggle Button UI
-    const optEn = document.querySelector('.opt-en');
-    const optKn = document.querySelector('.opt-kn');
-    if (currentLang === 'en') {
-        optEn?.classList.add('active');
-        optKn?.classList.remove('active');
-    } else {
-        optKn?.classList.add('active');
-        optEn?.classList.remove('active');
-    }
-
     updateTranslations();
-    renderSuggestedChips();
+});
 
-    // Re-render current suspect entity or no-results state in newly selected language
-    if (window.LAST_QUERY_NO_RESULTS) {
-        renderState2WithData(null, window.LAST_QUERY_NO_RESULTS);
-    } else if (window.ACTIVE_ENTITY_DATA) {
-        renderState2WithData(window.ACTIVE_ENTITY_DATA);
-    }
-}
+function initEventListeners() {
+    document.getElementById('lang-toggle-btn')?.addEventListener('click', toggleLanguage);
+    document.getElementById('role-toggle-btn')?.addEventListener('click', toggleRole);
 
-function updateTranslations() {
-    const t = TRANSLATIONS[currentLang];
+    document.getElementById('btn-state-1')?.addEventListener('click', () => switchState(1));
+    document.getElementById('btn-state-2')?.addEventListener('click', () => switchState(2));
+    document.getElementById('btn-new-chat')?.addEventListener('click', () => switchState(1));
 
-    // Translate elements with data-i18n (skipping dynamic entity elements managed by renderState2WithData)
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (DYNAMIC_I18N_KEYS.includes(key)) {
-            return; // Managed dynamically by renderState2WithData
-        }
-        if (t[key]) {
-            el.innerHTML = t[key];
-        }
-    });
-
-    // Translate input placeholders
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (t[key]) {
-            el.setAttribute('placeholder', t[key]);
-        }
-    });
-}
-
-function renderSuggestedChips() {
-    const container = document.getElementById('suggested-chips');
-    if (!container) return;
-
-    const chipList = SUGGESTED_CHIPS[currentRole][currentLang];
-    container.innerHTML = '';
-
-    chipList.forEach(text => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'suggested-chip';
-        chip.innerHTML = `<span>⚡</span> ${text}`;
-        chip.addEventListener('click', () => {
-            handleQuerySubmit(text);
+    const historyItems = document.querySelectorAll('.history-item, .recent-list__item');
+    historyItems.forEach((item) => {
+        item.addEventListener('click', () => {
+            historyItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            const titleEl = item.querySelector('.history-title') || item;
+            const queryText = titleEl.textContent.replace(/\s+/g, ' ').trim();
+            handleQuerySubmit(queryText);
         });
-        container.appendChild(chip);
     });
-}
 
-// ==========================================================================
-// 7. PREVIEW CARD MODAL DETAIL WINDOW
-// ==========================================================================
-function openDetailModal(cardKey) {
-    const currentData = window.ACTIVE_ENTITY_DATA || MOCK_SUSPECTS[0].data;
-    const data = (currentData && currentData.cardsDetail) ? currentData.cardsDetail[cardKey] : null;
-    if (!data) return;
+    document.getElementById('chat-form-state1')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleQuerySubmit(document.getElementById('chat-input-1').value.trim());
+    });
 
-    const modal = document.getElementById('detail-modal');
-    const titleEl = document.getElementById('modal-title');
-    const iconEl = document.getElementById('modal-icon');
-    const bodyEl = document.getElementById('modal-body');
+    document.getElementById('chat-form-state2')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleQuerySubmit(document.getElementById('chat-input-2').value.trim());
+    });
 
-    const isKn = currentLang === 'kn';
-    iconEl.textContent = data.icon;
-    titleEl.textContent = isKn ? data.titleKn : data.titleEn;
+    document.querySelectorAll('.preview-card').forEach(card => {
+        card.addEventListener('click', () => openDetailModal(card.dataset.card));
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openDetailModal(card.dataset.card);
+            }
+        });
+    });
 
-    const headers = isKn ? data.headersKn : data.headersEn;
+    document.getElementById('modal-close-btn')?.addEventListener('click', closeModal);
+    document.getElementById('modal-ok-btn')?.addEventListener('click', closeModal);
+    document.getElementById('detail-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'detail-modal') closeModal();
+    });
 
-    let tableHtml = `
-        <table class="modal-table">
-            <thead>
-                <tr>
-                    ${headers.map(h => `<th>${h}</th>`).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${data.rows.map(row => `
-                    <tr>
-                        ${row.map((cell, idx) => `
-                            <td ${idx === 0 ? 'style="font-weight:600; color:var(--text-main);"' : ''}>${cell}</td>
-                        `).join('')}
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-
-    bodyEl.innerHTML = tableHtml;
-    modal.classList.add('active');
-    modal.setAttribute('aria-hidden', 'false');
-}
-
-function closeModal() {
-    const modal = document.getElementById('detail-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        modal.setAttribute('aria-hidden', 'true');
-    }
+    document.getElementById('btn-export-pdf')?.addEventListener('click', () => window.print());
 }

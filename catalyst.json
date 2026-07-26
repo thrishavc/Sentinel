@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "source": "backend",
+    "targets": [
+      "crime_query_resolver",
+      "seed_data"
+    ]
+  }
+}
