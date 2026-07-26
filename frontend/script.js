@@ -173,9 +173,8 @@ let currentRole = 'investigator';
 let currentState = 1;
 let conversationId = "session_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
 let turnId = 1;
-window.ACTIVE_ENTITY_DATA = null;
 
-const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/";
+window.CONVO_ENGINE_URL = null;
 
 // ==========================================================================
 // 3. INTENT RESOLUTION & BACKEND CALLS
