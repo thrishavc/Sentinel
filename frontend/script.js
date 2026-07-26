@@ -171,7 +171,11 @@ const INTENT_VISIBLE_CARDS = {
 let currentLang = 'en';
 let currentRole = 'investigator';
 let currentState = 1;
+let conversationId = "session_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+let turnId = 1;
 window.ACTIVE_ENTITY_DATA = null;
+
+const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/";
 
 // ==========================================================================
 // 3. INTENT RESOLUTION & BACKEND CALLS
@@ -399,17 +403,44 @@ function setLoadingOverlay(active) {
     }
 }
 
+async function sendConversationalQuery(userQuery) {
+  try {
+    console.log(`[CONVO ENGINE REQUEST] conversation_id: ${conversationId}, turn_id: ${turnId}, query: "${userQuery}"`);
+    const response = await fetch(CONVO_ENGINE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: userQuery,
+        conversation_id: conversationId,
+        turn_id: turnId
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+    }
+    const data = await response.json();
+    turnId += 1;
+    console.log(`[CONVO ENGINE RESPONSE] turn_id now ${turnId}:`, data);
+    return data;
+  } catch (err) {
+    console.error("Conversational engine error:", err);
+    throw err;
+  }
+}
+
 async function handleQuerySubmit(userQuery) {
     const rawQuery = (userQuery && userQuery.trim()) ? userQuery.trim() : "";
+    if (!rawQuery) return;
+
     setLoadingOverlay(true);
 
+    // Role gating check: restrict pattern analysis intents to Inspector level only
+    const currentRoleClean = (window.currentUserRole || "").trim().toLowerCase();
+    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor");
     const intentObj = resolveIntent(rawQuery);
 
-    if (!intentObj) {
-        renderErrorState(
-            rawQuery ? "Could not determine query type, try rephrasing" : "Please enter a query",
-            rawQuery || "(empty query)"
-        );
+    if (intentObj && (intentObj.intent === "get_repeat_offenders" || intentObj.intent === "get_accused_network" || intentObj.intent === "get_mo_matches") && !isInspector) {
+        renderErrorState("This feature requires Inspector-level access.", rawQuery);
         switchState(2);
         setLoadingOverlay(false);
         clearChatInputs();
@@ -417,24 +448,104 @@ async function handleQuerySubmit(userQuery) {
     }
 
     try {
-        const backendResponse = await callBackend(intentObj.intent, intentObj.parameters);
-        renderState2WithBackendResponse(backendResponse, rawQuery, intentObj);
+        const convoData = await sendConversationalQuery(rawQuery);
+        if (convoData && convoData.status && convoData.status !== "success") {
+            const errorMsg = (convoData.error && convoData.error.message) || convoData.message || "Backend Query Error";
+            renderErrorState(errorMsg, rawQuery);
+        } else {
+            renderConversationalResponse(convoData, rawQuery, intentObj);
+        }
         switchState(2);
     } catch (err) {
-        console.error("Backend Execution Error:", err);
+        console.error("Conversational Engine Error:", err);
         renderErrorState(err.message || "An unexpected error occurred while querying intelligence backend", rawQuery);
         switchState(2);
     } finally {
         setLoadingOverlay(false);
         clearChatInputs();
+        const input2 = document.getElementById('chat-input-2');
+        if (input2) input2.focus();
     }
 }
 
-function clearChatInputs() {
-    const input1 = document.getElementById('chat-input-1');
-    const input2 = document.getElementById('chat-input-2');
-    if (input1) input1.value = '';
-    if (input2) input2.value = '';
+function toggleEvidenceDrawer() {
+    const details = document.getElementById('reasoning-details');
+    if (details) {
+        const isOpen = details.hasAttribute('open');
+        if (isOpen) {
+            details.removeAttribute('open');
+        } else {
+            details.setAttribute('open', '');
+            details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+}
+
+function renderConversationalResponse(data, queryText, intentObj) {
+    const payload = (data && data.extracted_payload) ? data.extracted_payload : (data.output || data);
+    const nlgOutput = payload.nlg_output || payload.response || payload.message || (typeof data.nlg_output === "string" ? data.nlg_output : "");
+    const evidence = payload.evidence || data.evidence || { source_tables: [], query_summary: "" };
+    const results = payload.results || data.results || [];
+    const intent = payload.intent || (intentObj ? intentObj.intent : "conversational");
+    const isKn = currentLang === 'kn';
+
+    const state2View = document.getElementById('state-2-view');
+    const answerCard = document.querySelector('.direct-answer-card');
+    const activeQueryEl = document.getElementById('active-query-text');
+    const answerHeaderEl = document.querySelector('.direct-answer-card .answer-header');
+    const answerBodyEl = document.getElementById('answer-body-text');
+
+    if (activeQueryEl) activeQueryEl.textContent = queryText;
+
+    if (state2View) state2View.classList.remove('no-results-mode');
+    if (answerCard) answerCard.classList.remove('no-results', 'role-rejected');
+
+    if (answerHeaderEl) {
+        answerHeaderEl.innerHTML = `
+            <div class="ai-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 16v-4" />
+                    <path d="M12 8h.01" />
+                </svg>
+                <span data-i18n="directAnswerHeader">${TRANSLATIONS[currentLang].directAnswerHeader}</span>
+            </div>
+            <span class="confidence-badge" data-i18n="confidenceBadge">${TRANSLATIONS[currentLang].confidenceBadge}</span>
+        `;
+    }
+
+    if (answerBodyEl) {
+        if (nlgOutput) {
+            const formattedNlg = escapeHtml(nlgOutput).replace(/\n/g, '<br>');
+            const sourceTables = evidence.source_tables || [];
+            let sourceChipsHtml = '';
+            if (sourceTables.length > 0) {
+                sourceChipsHtml = `
+                    <div class="convo-source-chips" style="margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--khaki); font-family: var(--font-heading); text-transform: uppercase;">Source Tables:</span>
+                        ${sourceTables.map(tbl => `<span class="table-chip" style="background: rgba(27, 42, 74, 0.08); color: var(--navy); border: 1px solid var(--navy); padding: 3px 10px; border-radius: 2px; font-size: 0.75rem; font-family: var(--font-mono);">${escapeHtml(tbl)}</span>`).join('')}
+                        ${evidence.query_summary ? `<button type="button" class="btn-view-evidence" id="btn-toggle-evidence" style="background: transparent; border: none; color: var(--navy); font-size: 0.78rem; font-weight: 700; font-family: var(--font-heading); text-decoration: underline; cursor: pointer; margin-left: 0.5rem;" onclick="toggleEvidenceDrawer()">View Evidence</button>` : ''}
+                    </div>
+                `;
+            } else if (evidence.query_summary) {
+                sourceChipsHtml = `
+                    <div class="convo-source-chips" style="margin-top: 1rem;">
+                        <button type="button" class="btn-view-evidence" id="btn-toggle-evidence" style="background: transparent; border: none; color: var(--navy); font-size: 0.78rem; font-weight: 700; font-family: var(--font-heading); text-decoration: underline; cursor: pointer;" onclick="toggleEvidenceDrawer()">View Evidence</button>
+                    </div>
+                `;
+            }
+            answerBodyEl.innerHTML = `<div>${formattedNlg}</div>${sourceChipsHtml}`;
+        } else {
+            answerBodyEl.innerHTML = buildDirectAnswerSentence({ results, result_count: results.length }, intent, isKn);
+        }
+    }
+
+    renderReasoningEvidence(evidence);
+
+    const activeIntent = intent || (intentObj ? intentObj.intent : "get_cases_by_district");
+    const cardsData = buildCardsDataFromResults({ results, result_count: results.length }, activeIntent, isKn);
+    window.ACTIVE_ENTITY_DATA = { cardsDetail: cardsData };
+    updatePreviewCardsUI(cardsData, activeIntent, isKn);
 }
 
 /**
@@ -1163,6 +1274,9 @@ function initEventListeners() {
     document.getElementById('btn-state-1')?.addEventListener('click', () => switchState(1));
     document.getElementById('btn-state-2')?.addEventListener('click', () => switchState(2));
     document.getElementById('btn-new-chat')?.addEventListener('click', () => {
+        conversationId = "session_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        turnId = 1;
+        console.log(`[NEW INVESTIGATION] Reset session -> conversation_id: ${conversationId}, turn_id: ${turnId}`);
         switchState(1);
         const firstHistory = document.querySelector('.history-item');
         if (firstHistory) {
