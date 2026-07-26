@@ -11,7 +11,7 @@
 // ==========================================================================
 // 1. LIVE BACKEND CONFIGURATION
 // ==========================================================================
-const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/";
+const CONVO_ENGINE_URL = "https://ksp-60079603520.development.catalystserverless.in/server/Conversational_engine/execute";
 
 // ==========================================================================
 // 2. BILINGUAL TRANSLATION DICTIONARY
@@ -369,6 +369,13 @@ async function callBackend(userQuery) {
     console.error("Conversational engine error:", err);
     throw err;
   }
+}
+
+function clearChatInputs() {
+    const input1 = document.getElementById('chat-input-1');
+    const input2 = document.getElementById('chat-input-2');
+    if (input1) input1.value = '';
+    if (input2) input2.value = '';
 }
 
 async function handleQuerySubmit(userQuery) {
