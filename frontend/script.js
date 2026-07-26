@@ -323,7 +323,7 @@ function resolveIntent(queryText) {
 async function callBackend(intent, parameters = {}) {
     // Role gating check: restrict pattern analysis intents to Inspector level only
     const currentRoleClean = (window.currentUserRole || "").trim().toLowerCase();
-    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor" || currentRoleClean === "app administrator");
+    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor");
     if ((intent === "get_repeat_offenders" || intent === "get_accused_network" || intent === "get_mo_matches") && !isInspector) {
         throw new Error("This feature requires Inspector-level access.");
     }
@@ -886,7 +886,7 @@ function applyRoleToUI(role) {
     if (!rawTarget) return;
 
     const cleanRole = String(rawTarget).trim().toLowerCase();
-    const isInspector = (cleanRole === "inspector" || cleanRole === "app administrator" || cleanRole === "supervisor");
+    const isInspector = (cleanRole === "inspector" || cleanRole === "supervisor");
     const mappedRole = isInspector ? "Inspector" : "Sub-Inspector";
     window.currentUserRole = mappedRole;
 
@@ -976,7 +976,7 @@ function renderSuggestedChips() {
     if (!container) return;
 
     const currentRoleClean = (window.currentUserRole || "").trim().toLowerCase();
-    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor" || currentRoleClean === "app administrator");
+    const isInspector = (currentRoleClean === "inspector" || currentRoleClean === "supervisor");
     const roleKey = isInspector ? 'supervisor' : 'investigator';
     const chipList = SUGGESTED_CHIPS[roleKey][currentLang] || [];
 
