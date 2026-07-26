@@ -605,27 +605,125 @@ INTENT_HANDLERS = {
 }
 
 
-def handler(context, basicio):
-    app = zcatalyst_sdk.initialize()
-    zcql = app.zcql()
+def apply_cors_headers(target):
+    """Attach CORS headers to any target basicio or response object across all SDK variants."""
+    if not target:
+        return
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+    # 1. response.headers dictionary if present
+    if hasattr(target, 'headers') and isinstance(target.headers, dict):
+        for k, v in headers.items():
+            target.headers[k] = v
+    # 2. set_header method if present
+    if hasattr(target, 'set_header') and callable(getattr(target, 'set_header')):
+        for k, v in headers.items():
+            try:
+                target.set_header(k, v)
+            except Exception:
+                pass
+    # 3. set_response_header method if present
+    if hasattr(target, 'set_response_header') and callable(getattr(target, 'set_response_header')):
+        for k, v in headers.items():
+            try:
+                target.set_response_header(k, v)
+            except Exception:
+                pass
 
+
+def handler(context, basicio):
+    print("=== CRIME_QUERY_RESOLVER FUNCTION INVOKED ===")
+    if hasattr(context, 'log') and callable(getattr(context, 'log')):
+        try:
+            context.log("=== CRIME_QUERY_RESOLVER FUNCTION INVOKED ===")
+        except Exception:
+            pass
+
+    # Immediately apply CORS headers to basicio
+    apply_cors_headers(basicio)
+
+    resp = None
     try:
-        intent = basicio.get_argument("intent")
-        parameters = basicio.get_argument("parameters") or {}
-    except Exception:
+        app = zcatalyst_sdk.initialize()
+        zcql = app.zcql()
+
+        # Check for HTTP method if OPTIONS preflight request
+        req_method = None
+        if hasattr(basicio, 'get_request_method') and callable(getattr(basicio, 'get_request_method')):
+            try:
+                req_method = basicio.get_request_method()
+            except Exception:
+                pass
+        elif hasattr(basicio, 'method'):
+            req_method = basicio.method
+
+        if req_method and str(req_method).upper() == 'OPTIONS':
+            apply_cors_headers(basicio)
+            if hasattr(basicio, 'set_status_code'):
+                try:
+                    basicio.set_status_code(200)
+                except Exception:
+                    pass
+            basicio.write(json.dumps({"status": "ok"}))
+            context.close()
+            return
+
         intent = None
         parameters = {}
 
-    if not intent:
-        resp = error("unknown", "MISSING_PARAMETER", "intent is required")
-    elif intent not in INTENT_HANDLERS:
-        resp = error(intent, "UNKNOWN_INTENT", f"Intent '{intent}' is not recognized")
-    else:
         try:
-            resp = INTENT_HANDLERS[intent](zcql, parameters)
-        except Exception as e:
-            context.log(f"Error resolving intent {intent}: {e}")
-            resp = error(intent, "INTERNAL_ERROR", str(e))
+            intent = basicio.get_argument("intent")
+            parameters = basicio.get_argument("parameters") or {}
+        except Exception:
+            pass
 
-    basicio.write(json.dumps(resp))
-    context.close()
+        # Fallback for raw JSON body if arguments not parsed automatically
+        if not intent and hasattr(basicio, 'get_request_body') and callable(getattr(basicio, 'get_request_body')):
+            try:
+                body_raw = basicio.get_request_body()
+                if body_raw:
+                    body_data = json.loads(body_raw)
+                    intent = body_data.get("intent")
+                    parameters = body_data.get("parameters") or {}
+            except Exception:
+                pass
+
+        if not intent:
+            resp = error("unknown", "MISSING_PARAMETER", "intent is required")
+        elif intent not in INTENT_HANDLERS:
+            resp = error(intent, "UNKNOWN_INTENT", f"Intent '{intent}' is not recognized")
+        else:
+            try:
+                resp = INTENT_HANDLERS[intent](zcql, parameters)
+            except Exception as e:
+                if hasattr(context, 'log') and callable(getattr(context, 'log')):
+                    try:
+                        context.log(f"Error resolving intent {intent}: {e}")
+                    except Exception:
+                        pass
+                resp = error(intent, "INTERNAL_ERROR", str(e))
+
+    except Exception as top_level_err:
+        print(f"Top-level unhandled exception in crime_query_resolver: {top_level_err}")
+        if hasattr(context, 'log') and callable(getattr(context, 'log')):
+            try:
+                context.log(f"Top-level unhandled exception in crime_query_resolver: {top_level_err}")
+            except Exception:
+                pass
+        resp = error("unknown", "SYSTEM_EXCEPTION", str(top_level_err))
+
+    # Ensure CORS headers are attached on every response path (success, error, exception)
+    apply_cors_headers(basicio)
+
+    try:
+        basicio.write(json.dumps(resp))
+    except Exception as write_err:
+        print(f"Error writing response JSON: {write_err}")
+
+    try:
+        context.close()
+    except Exception:
+        pass
