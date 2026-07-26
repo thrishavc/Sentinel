@@ -16,9 +16,9 @@
                 userManagement.getCurrentProjectUser()
                     .then((response) => {
                         var rawRole = response && response.content && response.content.role_details && response.content.role_details.role_name;
-                        console.log("Catalyst raw user role:", rawRole);
-                        var isAppAdmin = rawRole && rawRole.trim().toLowerCase() === "app administrator";
-                        var mappedRole = isAppAdmin ? "Supervisor" : "Investigator";
+                        console.log("RAW ROLE FROM CATALYST:", JSON.stringify(rawRole));
+                        var mappedRole = (rawRole && rawRole.trim().toLowerCase() === "app administrator") ? "Supervisor" : "Investigator";
+                        console.log("MAPPED ROLE:", mappedRole);
                         window.currentUserRole = mappedRole;
                         if (typeof applyRoleToUI === 'function') {
                             applyRoleToUI(mappedRole);

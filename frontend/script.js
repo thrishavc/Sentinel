@@ -879,6 +879,7 @@ function renderErrorState(errorMessage, queryText) {
 // ==========================================================================
 
 function applyRoleToUI(role) {
+    console.log("applyRoleToUI called with:", role);
     const rawTarget = role || window.currentUserRole;
     if (!rawTarget) return;
 
