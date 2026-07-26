@@ -374,9 +374,24 @@ async function callBackend(intent, parameters = {}) {
 
 function setLoadingOverlay(active) {
     const overlay = document.getElementById('query-loading-overlay');
-    if (!overlay) return;
-    overlay.classList.toggle('active', active);
-    overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
+    if (overlay) {
+        overlay.classList.toggle('active', active);
+        overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
+    }
+
+    document.querySelectorAll('.send-btn').forEach(btn => {
+        btn.classList.toggle('loading', active);
+    });
+
+    if (active) {
+        const activeInputBar = document.querySelector('.state-view.active .input-bar');
+        if (activeInputBar) {
+            activeInputBar.classList.remove('pulsing');
+            void activeInputBar.offsetWidth;
+            activeInputBar.classList.add('pulsing');
+        }
+    }
+
     if (active && window.SentinelAnimations?.startLoadingPulse) {
         window.SentinelAnimations.startLoadingPulse();
     } else if (!active && window.SentinelAnimations?.stopLoadingPulse) {
@@ -848,7 +863,24 @@ function renderErrorState(errorMessage, queryText) {
     window.LAST_QUERY_NO_RESULTS = queryText;
 
     if (state2View) state2View.classList.add('no-results-mode');
-    if (answerCard) answerCard.classList.add('no-results');
+
+    const isRoleError = errorMessage.includes("Inspector-level access") || errorMessage.includes("Supervisor access");
+    if (answerCard) {
+        answerCard.classList.add('no-results');
+        answerCard.classList.remove('role-rejected');
+        if (isRoleError) {
+            void answerCard.offsetWidth; // trigger reflow
+            answerCard.classList.add('role-rejected');
+
+            // Flash header role badge to visually connect the rejection to user's assigned role
+            const badgeText = document.getElementById('role-badge-text');
+            if (badgeText) {
+                badgeText.classList.remove('badge-flash');
+                void badgeText.offsetWidth;
+                badgeText.classList.add('badge-flash');
+            }
+        }
+    }
     hideAllPreviewCards();
 
     if (activeQueryEl) activeQueryEl.textContent = queryText;
@@ -856,15 +888,15 @@ function renderErrorState(errorMessage, queryText) {
     const isIntentError = errorMessage.includes("Could not determine query type");
     if (answerHeaderEl) {
         answerHeaderEl.innerHTML = `
-            <div class="ai-badge" style="color:var(--accent-red,#EF4444);">
+            <div class="ai-badge" style="color:var(--accent-red,#8a2e2e);">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <span>${isIntentError ? (isKn ? "ಪ್ರಶ್ನೆ ಗುರುತಿಸಲಾಗಲಿಲ್ಲ" : "Query Not Recognized") : (isKn ? "ದೋಷ ಉಂಟಾಗಿದೆ" : "Backend Query Error")}</span>
+                <span>${isRoleError ? (isKn ? "ಅನುಮತಿ ನಿರಾಕರಿಸಲಾಗಿದೆ" : "Access Restricted") : (isIntentError ? (isKn ? "ಪ್ರಶ್ನೆ ಗುರುತಿಸಲಾಗಲಿಲ್ಲ" : "Query Not Recognized") : (isKn ? "ದೋಷ ಉಂಟಾಗಿದೆ" : "Backend Query Error"))}</span>
             </div>
-            <span class="confidence-badge" style="border-color:rgba(239,68,68,0.4); color:#EF4444;">${isKn ? "ದೋಷ" : "Error"}</span>
+            <span class="confidence-badge" style="border-color:rgba(138,46,46,0.4); color:var(--alert,#8a2e2e);">${isRoleError ? (isKn ? "ಪಾತ್ರದ ದೋಷ" : "Role Gated") : (isKn ? "ದೋಷ" : "Error")}</span>
         `;
     }
 
@@ -896,30 +928,34 @@ function applyRoleToUI(role) {
         document.body.classList.add(isInspector ? 'role-inspector' : 'role-sub-inspector');
     }
 
-    // Update role badge UI with distinct icon and text
+    // Update role badge UI with distinct icon and text (cross-fade transition)
     const badgeText = document.getElementById('role-badge-text');
     if (badgeText) {
-        const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
-        if (isInspector) {
-            badgeText.className = 'role-badge inspector-badge';
-            badgeText.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span data-i18n="roleSupervisor">${t.roleSupervisor || "Inspector"}</span>
-            `;
-        } else {
-            badgeText.className = 'role-badge sub-inspector-badge';
-            badgeText.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-                <span data-i18n="roleInvestigator">${t.roleInvestigator || "Sub-Inspector"}</span>
-            `;
-        }
+        badgeText.classList.add('fading-out');
+        setTimeout(() => {
+            const t = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+            if (isInspector) {
+                badgeText.className = 'role-badge inspector-badge fading-in';
+                badgeText.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span data-i18n="roleSupervisor">${t.roleSupervisor || "Inspector"}</span>
+                `;
+            } else {
+                badgeText.className = 'role-badge sub-inspector-badge fading-in';
+                badgeText.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span data-i18n="roleInvestigator">${t.roleInvestigator || "Sub-Inspector"}</span>
+                `;
+            }
+            setTimeout(() => badgeText.classList.remove('fading-in', 'fading-out'), 150);
+        }, 75);
     }
 
     const roleToggleBtn = document.getElementById('role-toggle-btn');
@@ -997,7 +1033,13 @@ function renderSuggestedChips() {
         chip.type = 'button';
         chip.className = 'suggested-chip';
         chip.innerHTML = `<span>⚡</span> ${text}`;
-        chip.addEventListener('click', () => handleQuerySubmit(text));
+        chip.addEventListener('click', () => {
+            chip.classList.add('pressed');
+            setTimeout(() => {
+                chip.classList.remove('pressed');
+                handleQuerySubmit(text);
+            }, 80);
+        });
         container.appendChild(chip);
     });
 }
@@ -1120,7 +1162,15 @@ function initEventListeners() {
 
     document.getElementById('btn-state-1')?.addEventListener('click', () => switchState(1));
     document.getElementById('btn-state-2')?.addEventListener('click', () => switchState(2));
-    document.getElementById('btn-new-chat')?.addEventListener('click', () => switchState(1));
+    document.getElementById('btn-new-chat')?.addEventListener('click', () => {
+        switchState(1);
+        const firstHistory = document.querySelector('.history-item');
+        if (firstHistory) {
+            firstHistory.classList.remove('slide-down');
+            void firstHistory.offsetWidth;
+            firstHistory.classList.add('slide-down');
+        }
+    });
 
     const historyItems = document.querySelectorAll('.history-item, .recent-list__item');
     historyItems.forEach((item) => {
