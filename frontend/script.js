@@ -99,60 +99,44 @@ const DYNAMIC_I18N_KEYS = [
 const SUGGESTED_CHIPS = {
     investigator: {
         en: [
-            "Show all FIRs for suspect Manjunath ACC-89241",
-            "Show ATM skimming records for Syed Ibrahim ACC-70412",
-            "Show highway dacoity cases for Venkatesh Gowda ACC-55190",
-            "Find suspects linked to MO burglary cases"
+            "Show all FIRs for suspect Manjunath",
+            "Show cases in Whitefield",
+            "Show heinous crimes"
         ],
         kn: [
-            "ಶಂಕಿತ ಮಂಜುನಾಥ್ ACC-89241 ರ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ",
-            "ಸೈಯದ್ ಇಬ್ರಾಹಿಂ ACC-70412 ರ ಎಟಿಎಂ ಸ್ಕಿಮ್ಮಿಂಗ್ ದಾಖಲೆಗಳನ್ನು ತೋರಿಸಿ",
-            "ವೆಂಕಟೇಶ್ ಗೌಡ ACC-55190 ರ ಹೆದ್ದಾರಿ ದರೋಡೆ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ",
-            "ರಾತ್ರಿ ಕಳವು ಎಂಒ ಪ್ರಕರಣಗಳಿಗೆ ಲಿಂಕ್ ಆಗಿರುವ ಶಂಕಿತರನ್ನು ಹುಡುಕಿ"
+            "ಶಂಕಿತ ಮಂಜುನಾಥ್ ಅವರ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ",
+            "ವೈಟ್‌ಫೀಲ್ಡ್‌ನ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ",
+            "ಘೋರ ಅಪರಾಧಗಳನ್ನು ತೋರಿಸಿ"
         ]
     },
     supervisor: {
         en: [
-            "Show all FIRs in Whitefield district",
-            "District-wide burglary case count summary 2024",
-            "Overall chargesheet filing rate across stations",
-            "Show repeat offenders across districts",
-            "Analyze accused co-conspirator network"
+            "Show all FIRs for suspect Manjunath",
+            "Show cases in Whitefield",
+            "Show heinous crimes",
+            "Show repeat offenders"
         ],
         kn: [
-            "ವೈಟ್‌ಫೀಲ್ಡ್ ವಿಭಾಗದ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ",
-            "ಜಿಲ್ಲಾವಾರು ಕಳವು ಪ್ರಕರಣಗಳ ಒಟ್ಟು ಸಂಖ್ಯೆ ಸಾರಾಂಶ 2024",
-            "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ",
-            "ವಿವಿಧ ಜಿಲ್ಲೆಗಳಲ್ಲಿ ಮರುಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ",
-            "ಆರೋಪಿಗಳ ಸಹಚರ ಜಾಲ ವಿಶ್ಲೇಷಿಸಿ"
+            "ಶಂಕಿತ ಮಂಜುನಾಥ್ ಅವರ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ",
+            "ವೈಟ್‌ಫೀಲ್ಡ್‌ನ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ",
+            "ಘೋರ ಅಪರಾಧಗಳನ್ನು ತೋರಿಸಿ",
+            "ಮರುಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ"
         ]
     }
 };
 
 /** Fixed intent+parameter pairs for suggested chips (no text parsing). */
 const SUGGESTED_CHIP_INTENTS = {
-    // Investigator — EN
-    "Show all FIRs for suspect Manjunath ACC-89241": { intent: "search_accused_by_name", parameters: { name: "Manjunath" } },
-    "Show ATM skimming records for Syed Ibrahim ACC-70412": { intent: "search_accused_by_name", parameters: { name: "Syed Ibrahim" } },
-    "Show highway dacoity cases for Venkatesh Gowda ACC-55190": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Dacoity" } },
-    "Find suspects linked to MO burglary cases": { intent: "get_mo_matches", parameters: { crime_no: "104430006202600001" } },
-    // Investigator — KN
-    "ಶಂಕಿತ ಮಂಜುನಾಥ್ ACC-89241 ರ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ": { intent: "search_accused_by_name", parameters: { name: "Manjunath" } },
-    "ಸೈಯದ್ ಇಬ್ರಾಹಿಂ ACC-70412 ರ ಎಟಿಎಂ ಸ್ಕಿಮ್ಮಿಂಗ್ ದಾಖಲೆಗಳನ್ನು ತೋರಿಸಿ": { intent: "search_accused_by_name", parameters: { name: "Syed Ibrahim" } },
-    "ವೆಂಕಟೇಶ್ ಗೌಡ ACC-55190 ರ ಹೆದ್ದಾರಿ ದರೋಡೆ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Dacoity" } },
-    "ರಾತ್ರಿ ಕಳವು ಎಂಒ ಪ್ರಕರಣಗಳಿಗೆ ಲಿಂಕ್ ಆಗಿರುವ ಶಂಕಿತರನ್ನು ಹುಡುಕಿ": { intent: "get_mo_matches", parameters: { crime_no: "104430006202600001" } },
-    // Supervisor — EN
-    "Show all FIRs in Whitefield district": { intent: "get_cases_by_district", parameters: { district_name: "Whitefield" } },
-    "District-wide burglary case count summary 2024": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } },
-    "Overall chargesheet filing rate across stations": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } },
-    "Show repeat offenders across districts": { intent: "get_repeat_offenders", parameters: {} },
-    "Analyze accused co-conspirator network": { intent: "get_accused_network", parameters: { accused_master_id: 1 } },
-    // Supervisor — KN
-    "ವೈಟ್‌ಫೀಲ್ಡ್ ವಿಭಾಗದ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_district", parameters: { district_name: "Whitefield" } },
-    "ಜಿಲ್ಲಾವಾರು ಕಳವು ಪ್ರಕರಣಗಳ ಒಟ್ಟು ಸಂಖ್ಯೆ ಸಾರಾಂಶ 2024": { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } },
-    "ಠಾಣೆಗಳಲ್ಲಿ ಒಟ್ಟಾರೆ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಕೆ ದರ": { intent: "get_cases_by_status", parameters: { case_status_name: "Charge Sheeted" } },
-    "ವಿವಿಧ ಜಿಲ್ಲೆಗಳಲ್ಲಿ ಮರುಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_repeat_offenders", parameters: {} },
-    "ಆರೋಪಿಗಳ ಸಹಚರ ಜಾಲ ವಿಶ್ಲೇಷಿಸಿ": { intent: "get_accused_network", parameters: { accused_master_id: 1 } }
+    // English
+    "Show all FIRs for suspect Manjunath": { intent: "search_accused_by_name", parameters: { name: "Manjunath Kumar" } },
+    "Show cases in Whitefield": { intent: "get_cases_by_district", parameters: { district_name: "Bangalore Urban" } },
+    "Show repeat offenders": { intent: "get_repeat_offenders", parameters: {} },
+    "Show heinous crimes": { intent: "get_cases_by_gravity", parameters: { gravity_level: "Heinous" } },
+    // Kannada
+    "ಶಂಕಿತ ಮಂಜುನಾಥ್ ಅವರ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳನ್ನು ತೋರಿಸಿ": { intent: "search_accused_by_name", parameters: { name: "Manjunath Kumar" } },
+    "ವೈಟ್‌ಫೀಲ್ಡ್‌ನ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_district", parameters: { district_name: "Bangalore Urban" } },
+    "ಮರುಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_repeat_offenders", parameters: {} },
+    "ಘೋರ ಅಪರಾಧಗಳನ್ನು ತೋರಿಸಿ": { intent: "get_cases_by_gravity", parameters: { gravity_level: "Heinous" } }
 };
 
 const KARNATAKA_DISTRICTS = [
@@ -208,7 +192,7 @@ function resolveIntent(queryText) {
 
     const text = queryText.trim();
 
-    // 1. Fixed suggested-chip mappings (exact match, no parsing)
+    // 1. Fixed suggested-chip mappings (exact match)
     if (SUGGESTED_CHIP_INTENTS[text]) {
         return SUGGESTED_CHIP_INTENTS[text];
     }
@@ -221,53 +205,108 @@ function resolveIntent(queryText) {
         return { intent: "get_case_by_crimeno", parameters: { crime_no: crimeNoMatch[0] } };
     }
 
-    // 3. Suspect / accused + name → search_accused_by_name
+    // 3. Repeat offenders → get_repeat_offenders
+    if (/\brepeat\s+offender/i.test(lower) || lower.includes("ಮರುಅಪರಾಧಿ")) {
+        return { intent: "get_repeat_offenders", parameters: {} };
+    }
+
+    // 4. Network / associates / linked → get_accused_network
+    if (/\b(network|associates?|co-conspirator|gang)\b/i.test(lower) || lower.includes("ಸಹಚರ")) {
+        const accusedId = text.match(/accused_master_id[=:\s]+(\d+)/i);
+        const caseId = text.match(/case_master_id[=:\s]+(\d+)/i);
+        return {
+            intent: "get_accused_network",
+            parameters: accusedId ? { accused_master_id: parseInt(accusedId[1], 10) } : (caseId ? { case_master_id: parseInt(caseId[1], 10) } : { accused_master_id: 1 })
+        };
+    }
+
+    // 5. MO / pattern / similar / modus operandi → get_mo_matches
+    if (/\b(mo|modus operandi|pattern|similar)\b/i.test(lower) || lower.includes("ಎಂಒ")) {
+        const moCrimeNo = text.match(/\b\d{10,18}\b/);
+        return {
+            intent: "get_mo_matches",
+            parameters: moCrimeNo ? { crime_no: moCrimeNo[0] } : { crime_no: "10100010001202600001" }
+        };
+    }
+
+    // 6. Chargesheet → get_chargesheet_status
+    if (lower.includes("chargesheet") || lower.includes("charge sheet") || lower.includes("ಚಾರ್ಜ್")) {
+        const csCrimeNo = text.match(/\b\d{10,18}\b/);
+        return {
+            intent: "get_chargesheet_status",
+            parameters: csCrimeNo ? { crime_no: csCrimeNo[0] } : { crime_no: "10100010001202600001" }
+        };
+    }
+
+    // 7. Gravity (Heinous vs Non-Heinous)
+    if (lower.includes("heinous") || lower.includes("ಘೋರ")) {
+        const level = lower.includes("non-heinous") || lower.includes("non heinous") ? "Non-Heinous" : "Heinous";
+        return { intent: "get_cases_by_gravity", parameters: { gravity_level: level } };
+    }
+
+    // 8. Status match
+    if (lower.includes("under investigation")) {
+        return { intent: "get_cases_by_status", parameters: { case_status_name: "Under Investigation" } };
+    } else if (lower.includes("under trial")) {
+        return { intent: "get_cases_by_status", parameters: { case_status_name: "Under Trial" } };
+    } else if (lower.includes("closed")) {
+        return { intent: "get_cases_by_status", parameters: { case_status_name: "Closed" } };
+    } else if (lower.includes("fr filed")) {
+        return { intent: "get_cases_by_status", parameters: { case_status_name: "FR Filed" } };
+    }
+
+    // 9. Arrests by Officer
+    if (lower.includes("arrest") || lower.includes("officer") || lower.includes("kgid")) {
+        return { intent: "get_arrests_by_officer", parameters: { employee_name: "Ravi Kumar" } };
+    }
+
+    // 10. Case Victims
+    if (lower.includes("victim") || lower.includes("victims")) {
+        return { intent: "get_case_victims", parameters: { crime_no: "10100010001202600001" } };
+    }
+
+    // 11. Suspect / accused + name → search_accused_by_name
     const accusedMatch = lower.match(/(?:suspect|accused)\s+(?:named\s+)?([a-z][a-z\s]{1,30}?)(?:\s+acc-|\s+\d|$|,|\.)/i)
-        || lower.match(/(?:suspect|accused)\s+([a-z]{3,})/i);
+        || lower.match(/(?:suspect|accused)\s+([a-z]{3,})/i)
+        || lower.match(/\b(manjunath|syed|venkatesh|ravi|suresh|prakash)\b/i);
     if (accusedMatch) {
-        const name = accusedMatch[1].trim();
+        const rawName = accusedMatch[1] || accusedMatch[0];
+        const name = rawName.trim();
         const stopWords = ["all", "firs", "cases", "details", "in", "the", "for", "linked", "to"];
         if (name && !stopWords.includes(name.toLowerCase())) {
-            return { intent: "search_accused_by_name", parameters: { name: name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") } };
+            const formattedName = name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            return { intent: "search_accused_by_name", parameters: { name: formattedName } };
         }
     }
 
-    // 4. District name → get_cases_by_district
+    // 12. District name → get_cases_by_district
     const foundDistrict = KARNATAKA_DISTRICTS.find(d => lower.includes(d.toLowerCase()));
     if (foundDistrict) {
         return { intent: "get_cases_by_district", parameters: { district_name: foundDistrict } };
     }
 
-    // 5. Chargesheet → get_chargesheet_status (requires crime_no in text)
-    if (lower.includes("chargesheet") || lower.includes("charge sheet") || lower.includes("ಚಾರ್ಜ್")) {
-        const csCrimeNo = text.match(/\b\d{10,18}\b/);
-        if (csCrimeNo) {
-            return { intent: "get_chargesheet_status", parameters: { crime_no: csCrimeNo[0] } };
-        }
+    // 13. Court name → get_cases_by_court
+    if (lower.includes("court") || lower.includes("sessions") || lower.includes("district court")) {
+        return { intent: "get_cases_by_court", parameters: { court_name: "Bangalore Urban Sessions Court" } };
     }
 
-    // 6. Network / associates / linked → get_accused_network
-    if (/\b(network|associates?|linked|gang)\b/i.test(lower) || lower.includes("ಸಹಚರ")) {
-        const accusedId = text.match(/accused_master_id[=:\s]+(\d+)/i);
-        const caseId = text.match(/case_master_id[=:\s]+(\d+)/i);
-        if (accusedId) {
-            return { intent: "get_accused_network", parameters: { accused_master_id: parseInt(accusedId[1], 10) } };
-        }
-        if (caseId) {
-            return { intent: "get_accused_network", parameters: { case_master_id: parseInt(caseId[1], 10) } };
-        }
+    // 14. Crime Head / Subhead
+    if (lower.includes("burglary")) {
+        return { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Burglary" } };
+    } else if (lower.includes("robbery")) {
+        return { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Robbery" } };
+    } else if (lower.includes("murder")) {
+        return { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Murder" } };
+    } else if (lower.includes("theft")) {
+        return { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "Theft" } };
+    } else if (lower.includes("skimming") || lower.includes("cyber")) {
+        return { intent: "get_cases_by_crimehead", parameters: { crime_subhead: "ATM Skimming" } };
     }
 
-    // 7. MO / pattern / similar → get_mo_matches
-    if (/\b(mo|modus operandi|pattern|similar)\b/i.test(lower) || lower.includes("ಎಂಒ")) {
-        const moCrimeNo = text.match(/\b\d{10,18}\b/);
-        const moAccusedId = text.match(/accused_master_id[=:\s]+(\d+)/i);
-        if (moAccusedId) {
-            return { intent: "get_mo_matches", parameters: { accused_master_id: parseInt(moAccusedId[1], 10) } };
-        }
-        if (moCrimeNo) {
-            return { intent: "get_mo_matches", parameters: { crime_no: moCrimeNo[0] } };
-        }
+    // 15. Act & Section
+    const sectionMatch = lower.match(/section\s+(\d+)/i) || lower.match(/\b(302|392|380|420)\b/);
+    if (sectionMatch || lower.includes("ipc")) {
+        return { intent: "get_cases_by_act_section", parameters: { act_short_name: "IPC", section_code: sectionMatch ? sectionMatch[1] : "302" } };
     }
 
     return null;
@@ -283,7 +322,7 @@ function resolveIntent(queryText) {
  */
 async function callBackend(intent, parameters = {}) {
     // Client-side guard: restrict pattern analysis intents to Supervisor role only
-    if ((intent === "get_repeat_offenders" || intent === "get_accused_network") && window.currentUserRole !== "Supervisor") {
+    if ((intent === "get_repeat_offenders" || intent === "get_accused_network" || intent === "get_mo_matches") && window.currentUserRole !== "Supervisor") {
         throw new Error("This feature requires Supervisor access.");
     }
 
@@ -840,14 +879,19 @@ function renderErrorState(errorMessage, queryText) {
 // ==========================================================================
 
 function applyRoleToUI(role) {
-    if (!role) return;
-    const mappedRole = (role === "App Administrator" || role === "Supervisor") ? "Supervisor" : "Investigator";
+    const rawTarget = role || window.currentUserRole;
+    if (!rawTarget) return;
+
+    const cleanRole = String(rawTarget).trim().toLowerCase();
+    const isSupervisor = (cleanRole === "supervisor" || cleanRole === "app administrator");
+    const mappedRole = isSupervisor ? "Supervisor" : "Investigator";
     window.currentUserRole = mappedRole;
-    const isSupervisor = (mappedRole === "Supervisor");
 
     // Update body class dynamically
-    document.body.classList.remove('role-investigator', 'role-supervisor', 'role-admin');
-    document.body.classList.add(isSupervisor ? 'role-supervisor' : 'role-investigator');
+    if (document.body) {
+        document.body.classList.remove('role-investigator', 'role-supervisor', 'role-admin');
+        document.body.classList.add(isSupervisor ? 'role-supervisor' : 'role-investigator');
+    }
 
     // Update role badge UI with distinct icon and text
     const badgeText = document.getElementById('role-badge-text');
@@ -1058,7 +1102,11 @@ function escapeHtml(str) {
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
-    renderSuggestedChips();
+    if (window.currentUserRole) {
+        applyRoleToUI(window.currentUserRole);
+    } else {
+        renderSuggestedChips();
+    }
     updateTranslations();
 });
 
